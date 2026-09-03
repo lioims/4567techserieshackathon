@@ -1,0 +1,1926 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>SaveWiser -- Preview</title>
+<style>
+/* =============================================================================
+   SaveWiser - Liquid Glass design system
+   Apple Liquid Glass inspired: translucent frosted panels, soft depth,
+   continuous rounded corners, a single strong accent color (#005EBA).
+   ============================================================================= */
+
+:root {
+  --sw-blue: #005EBA;
+  --sw-blue-dark: #00447f;
+  --sw-blue-light: #4a9fe0;
+  --sw-blue-tint-10: rgba(0, 94, 186, 0.10);
+  --sw-blue-tint-16: rgba(0, 94, 186, 0.16);
+  --sw-blue-tint-28: rgba(0, 94, 186, 0.28);
+
+  --sw-ink: #0b1220;
+  --sw-ink-soft: #414a58;
+  --sw-ink-faint: #7c8494;
+
+  --sw-glass-fill: rgba(255, 255, 255, 0.55);
+  --sw-glass-fill-strong: rgba(255, 255, 255, 0.72);
+  --sw-glass-border: rgba(255, 255, 255, 0.55);
+  --sw-glass-shadow: rgba(20, 40, 70, 0.14);
+
+  --sw-blue-glass-fill: rgba(0, 94, 186, 0.62);
+  --sw-blue-glass-fill-strong: rgba(0, 94, 186, 0.78);
+  --sw-blue-glass-border: rgba(255, 255, 255, 0.35);
+
+  --sw-radius-xl: 28px;
+  --sw-radius-lg: 22px;
+  --sw-radius-md: 16px;
+  --sw-radius-sm: 12px;
+  --sw-radius-pill: 999px;
+
+  --sw-font: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text",
+    "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+
+  color-scheme: light;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  font-family: var(--sw-font);
+  color: var(--sw-ink);
+  -webkit-font-smoothing: antialiased;
+  user-select: none;
+}
+
+/* Non-mac fallback background: the Liquid Glass look here comes from CSS
+   blur over this gradient rather than true desktop vibrancy. */
+html.platform-other body {
+  background:
+    radial-gradient(1200px 800px at 15% -10%, rgba(0, 94, 186, 0.16), transparent 60%),
+    radial-gradient(900px 700px at 110% 10%, rgba(0, 94, 186, 0.10), transparent 55%),
+    linear-gradient(180deg, #eaf3fc 0%, #f6fafe 45%, #eef4fb 100%);
+}
+
+/* On macOS the Electron window itself is transparent + vibrant, so the page
+   background stays transparent and lets the OS material blur the desktop. */
+html.platform-mac body {
+  background: transparent;
+}
+
+#app { height: 100%; }
+
+::-webkit-scrollbar { width: 0; height: 0; }
+
+a { color: inherit; text-decoration: none; }
+button { font-family: inherit; }
+
+/* -----------------------------------------------------------------------
+   Shell / layout
+   ----------------------------------------------------------------------- */
+
+.app-shell {
+  max-width: 480px;
+  margin: 0 auto;
+  min-height: 100vh;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  -webkit-app-region: drag;
+}
+
+.app-shell * { -webkit-app-region: no-drag; }
+
+/* The whole shell (topbar+page+nav) fades/slides as one unit, driven by
+   JS toggling opacity/transform directly -- see setShellContent() in app.js.
+   Kept off the .page class itself so overlay/toast updates elsewhere never
+   retrigger it. */
+#sw-shell { transition: opacity 0.2s ease, transform 0.2s ease; }
+
+.titlebar-spacer { height: 28px; }
+html.platform-other .titlebar-spacer { height: 10px; }
+
+.page {
+  flex: 1;
+  padding: 4px 16px 120px;
+  overflow-y: auto;
+}
+
+@keyframes sw-fade-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.section-title {
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  margin: 18px 2px 10px;
+  color: var(--sw-ink);
+}
+
+.section-subtitle {
+  font-size: 13px;
+  color: var(--sw-ink-faint);
+  margin: -4px 2px 12px;
+}
+
+/* -----------------------------------------------------------------------
+   Glass primitives
+   ----------------------------------------------------------------------- */
+
+.glass {
+  background: var(--sw-glass-fill);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid var(--sw-glass-border);
+  border-radius: var(--sw-radius-lg);
+  box-shadow: 0 8px 28px var(--sw-glass-shadow), inset 0 1px 0 rgba(255,255,255,0.6);
+}
+
+.glass-strong {
+  background: var(--sw-glass-fill-strong);
+  backdrop-filter: blur(28px) saturate(180%);
+  -webkit-backdrop-filter: blur(28px) saturate(180%);
+}
+
+.glass-blue {
+  background: linear-gradient(155deg, var(--sw-blue-glass-fill), var(--sw-blue-glass-fill-strong));
+  backdrop-filter: blur(22px) saturate(160%);
+  -webkit-backdrop-filter: blur(22px) saturate(160%);
+  border: 1px solid var(--sw-blue-glass-border);
+  border-radius: var(--sw-radius-lg);
+  box-shadow: 0 10px 30px rgba(0, 94, 186, 0.28), inset 0 1px 0 rgba(255,255,255,0.25);
+  color: #fff;
+}
+
+.card {
+  padding: 16px;
+  margin-bottom: 14px;
+}
+
+/* -----------------------------------------------------------------------
+   Header pill ("Welcome back, SARAH ONG!")
+   ----------------------------------------------------------------------- */
+
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  margin: 0 0 4px;
+  border-radius: var(--sw-radius-pill);
+  background: linear-gradient(135deg, rgba(0,94,186,0.20), rgba(0,94,186,0.10));
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(0,94,186,0.22);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.5);
+}
+
+.topbar__icon {
+  width: 26px; height: 26px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 50%;
+  background: rgba(0,94,186,0.14);
+  color: var(--sw-blue);
+  flex: none;
+  overflow: hidden;
+}
+.topbar__icon img { width: 62%; height: 62%; object-fit: contain; display: block; }
+
+.topbar__text {
+  flex: 1;
+  font-size: 14.5px;
+  color: var(--sw-ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.topbar__text b { color: var(--sw-blue-dark); font-weight: 800; }
+
+.topbar__actions { display: flex; gap: 6px; }
+
+.topbar__btn {
+  width: 28px; height: 28px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.5);
+  color: var(--sw-blue-dark);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+}
+.topbar__btn:hover { background: rgba(255,255,255,0.8); }
+
+/* -----------------------------------------------------------------------
+   Bottom nav (floating glass pill)
+   ----------------------------------------------------------------------- */
+
+.bottomnav {
+  position: fixed;
+  left: 50%;
+  bottom: 22px;
+  transform: translateX(-50%);
+  width: calc(100% - 48px);
+  max-width: 400px;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  padding: 10px 10px;
+  border-radius: var(--sw-radius-pill);
+  background: rgba(255,255,255,0.65);
+  backdrop-filter: blur(28px) saturate(200%);
+  -webkit-backdrop-filter: blur(28px) saturate(200%);
+  border: 1px solid rgba(255,255,255,0.7);
+  box-shadow: 0 12px 34px rgba(20,40,70,0.22), inset 0 1px 0 rgba(255,255,255,0.7);
+  z-index: 50;
+}
+
+.navbtn {
+  border: none;
+  background: transparent;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 6px 14px;
+  border-radius: var(--sw-radius-pill);
+  color: var(--sw-ink-faint);
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 600;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.navbtn.active { color: var(--sw-blue); background: var(--sw-blue-tint-10); }
+.navbtn svg { width: 19px; height: 19px; }
+
+.navbtn--fab {
+  color: #fff;
+  background: linear-gradient(155deg, var(--sw-blue-light), var(--sw-blue));
+  padding: 10px 16px;
+  margin-top: -22px;
+  box-shadow: 0 8px 20px rgba(0,94,186,0.45);
+}
+.navbtn--fab.active { color: #fff; background: linear-gradient(155deg, var(--sw-blue-light), var(--sw-blue)); }
+
+/* -----------------------------------------------------------------------
+   Buttons
+   ----------------------------------------------------------------------- */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 11px 18px;
+  border-radius: var(--sw-radius-pill);
+  border: none;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.12s ease, box-shadow 0.12s ease, opacity 0.12s ease;
+}
+.btn:active { transform: scale(0.97); }
+
+.btn--primary {
+  background: linear-gradient(155deg, var(--sw-blue-light), var(--sw-blue));
+  color: #fff;
+  box-shadow: 0 8px 20px rgba(0,94,186,0.35);
+}
+.btn--primary:hover { box-shadow: 0 10px 24px rgba(0,94,186,0.45); }
+
+.btn--glass {
+  background: rgba(0,94,186,0.12);
+  color: var(--sw-blue-dark);
+  border: 1px solid rgba(0,94,186,0.22);
+}
+.btn--glass:hover { background: rgba(0,94,186,0.18); }
+
+.btn--ghost {
+  background: rgba(255,255,255,0.5);
+  color: var(--sw-ink-soft);
+  border: 1px solid rgba(255,255,255,0.7);
+}
+
+.btn--block { width: 100%; }
+.btn--sm { padding: 7px 12px; font-size: 12.5px; }
+.btn:disabled { opacity: 0.5; cursor: default; }
+
+/* -----------------------------------------------------------------------
+   Deal cards
+   ----------------------------------------------------------------------- */
+
+.deal-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.deal-card {
+  border-radius: var(--sw-radius-md);
+  overflow: hidden;
+  background: rgba(255,255,255,0.55);
+  backdrop-filter: blur(18px) saturate(160%);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  border: 1px solid rgba(255,255,255,0.6);
+  box-shadow: 0 6px 18px rgba(20,40,70,0.12);
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+.deal-card:hover { transform: translateY(-2px); }
+
+.deal-card__media {
+  height: 96px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 15px;
+  color: #fff;
+  text-align: center;
+  padding: 6px;
+  background-size: cover;
+  background-position: center;
+}
+
+.deal-card__body { padding: 10px 12px 12px; }
+.deal-card__title { font-size: 13.5px; font-weight: 700; margin: 0 0 2px; }
+.deal-card__desc { font-size: 12px; color: var(--sw-ink-faint); margin: 0; }
+.deal-card__badge {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  color: var(--sw-blue-dark);
+  background: var(--sw-blue-tint-16);
+  padding: 2px 7px;
+  border-radius: var(--sw-radius-pill);
+  margin-top: 6px;
+}
+
+.deal-strip {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  margin: 0 -2px 4px;
+}
+.deal-chip {
+  flex: none;
+  width: 96px;
+  border-radius: var(--sw-radius-sm);
+  overflow: hidden;
+  background: rgba(255,255,255,0.55);
+  border: 1px solid rgba(255,255,255,0.6);
+  cursor: pointer;
+}
+.deal-chip__media {
+  height: 60px;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 800; font-size: 11px; color: #fff; text-align: center; padding: 4px;
+}
+.deal-chip__label { padding: 6px 7px 8px; }
+.deal-chip__label b { display: block; font-size: 11px; }
+.deal-chip__label span { display: block; font-size: 10px; color: var(--sw-ink-faint); }
+
+/* Category chip tabs (Deals page) */
+.tabs {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  margin-bottom: 14px;
+}
+.tab {
+  flex: none;
+  padding: 8px 14px;
+  border-radius: var(--sw-radius-pill);
+  background: rgba(255,255,255,0.55);
+  border: 1px solid rgba(255,255,255,0.6);
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--sw-ink-soft);
+  cursor: pointer;
+}
+.tab.active {
+  background: var(--sw-blue);
+  color: #fff;
+  border-color: var(--sw-blue);
+  box-shadow: 0 6px 16px rgba(0,94,186,0.35);
+}
+
+/* -----------------------------------------------------------------------
+   Lists (Recent Activity / Announcements)
+   ----------------------------------------------------------------------- */
+
+.list { display: flex; flex-direction: column; }
+.list-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 4px;
+  border-bottom: 1px solid rgba(11,18,32,0.06);
+  cursor: pointer;
+}
+.list-item:last-child { border-bottom: none; }
+.list-item__icon {
+  width: 28px; height: 28px; border-radius: 9px;
+  background: var(--sw-blue-tint-10);
+  color: var(--sw-blue);
+  display: flex; align-items: center; justify-content: center;
+  flex: none;
+}
+.list-item__body { flex: 1; min-width: 0; }
+.list-item__title { font-size: 13.5px; font-weight: 700; margin: 0; }
+.list-item__meta { font-size: 11.5px; color: var(--sw-ink-faint); margin: 2px 0 0; }
+.list-item__chevron { color: var(--sw-ink-faint); flex: none; }
+
+.activity-list { font-size: 13px; line-height: 1.55; padding-left: 18px; margin: 0; color: var(--sw-ink-soft); }
+.activity-list li { margin-bottom: 6px; }
+.activity-list a { color: var(--sw-blue); text-decoration: underline; font-weight: 600; }
+
+/* -----------------------------------------------------------------------
+   Toggle switch (announcement subscribe)
+   ----------------------------------------------------------------------- */
+
+.toggle {
+  position: relative;
+  width: 42px; height: 25px;
+  border-radius: var(--sw-radius-pill);
+  background: rgba(11,18,32,0.16);
+  border: none;
+  cursor: pointer;
+  flex: none;
+  transition: background 0.18s ease;
+}
+.toggle.on { background: var(--sw-blue); }
+.toggle::after {
+  content: "";
+  position: absolute;
+  top: 2.5px; left: 3px;
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.25);
+  transition: transform 0.18s ease;
+}
+.toggle.on::after { transform: translateX(17px); }
+
+/* -----------------------------------------------------------------------
+   Profile
+   ----------------------------------------------------------------------- */
+
+.profile-row { display: flex; align-items: center; gap: 12px; }
+.avatar {
+  width: 46px; height: 46px; border-radius: 50%;
+  background: linear-gradient(155deg, var(--sw-blue-light), var(--sw-blue));
+  color: #fff; display: flex; align-items: center; justify-content: center;
+  font-weight: 800; font-size: 16px; flex: none;
+  box-shadow: 0 4px 12px rgba(0,94,186,0.35);
+}
+.profile-row__name { font-weight: 800; font-size: 14.5px; margin: 0; }
+.profile-row__status { font-size: 12px; color: #1a9c5c; display: flex; align-items: center; gap: 4px; margin-top: 2px; }
+.profile-row__status.off { color: var(--sw-ink-faint); }
+
+.btn-row { display: flex; gap: 10px; margin-top: 14px; }
+.btn-row .btn { flex: 1; }
+
+/* -----------------------------------------------------------------------
+   Progress bars / badges
+   ----------------------------------------------------------------------- */
+
+.progress-track {
+  height: 10px; border-radius: var(--sw-radius-pill);
+  background: rgba(11,18,32,0.08);
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%; border-radius: var(--sw-radius-pill);
+  background: linear-gradient(90deg, var(--sw-blue-light), var(--sw-blue));
+  transition: width 0.4s ease;
+}
+.progress-label { display: flex; justify-content: space-between; align-items: center; font-size: 11.5px; color: var(--sw-ink-faint); margin-top: 6px; gap: 8px; }
+.progress-pct { font-weight: 800; color: var(--sw-blue-dark); font-size: 12.5px; }
+
+/* Badges */
+.badge-strip { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 2px; }
+.badge-chip {
+  flex: none;
+  width: 78px;
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  padding: 12px 6px 10px;
+  border-radius: var(--sw-radius-md);
+  background: rgba(255,255,255,0.5);
+  border: 1px solid rgba(255,255,255,0.6);
+  text-align: center;
+}
+.badge-chip__mark {
+  width: 40px; height: 40px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 19px;
+  background: linear-gradient(155deg, var(--sw-blue-light), var(--sw-blue));
+  box-shadow: 0 6px 14px rgba(0,94,186,0.3);
+}
+.badge-chip.locked .badge-chip__mark {
+  background: rgba(11,18,32,0.08);
+  box-shadow: none;
+  filter: grayscale(1);
+  opacity: 0.55;
+}
+.badge-chip__name { font-size: 10px; font-weight: 700; color: var(--sw-ink-soft); line-height: 1.25; }
+.badge-chip.locked .badge-chip__name { color: var(--sw-ink-faint); }
+.badge-pill {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 11.5px; font-weight: 700; color: var(--sw-blue-dark);
+  background: var(--sw-blue-tint-16); padding: 4px 10px; border-radius: var(--sw-radius-pill);
+}
+
+/* Bar chart (Monthly Spending) */
+.chart {
+  display: flex; align-items: flex-end; gap: 8px;
+  height: 120px; padding: 6px 2px 0;
+}
+.chart__bar-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; }
+.chart__bar {
+  width: 60%;
+  border-radius: 6px 6px 3px 3px;
+  background: linear-gradient(180deg, var(--sw-blue-light), var(--sw-blue));
+  transition: height 0.5s ease;
+}
+.chart__label { font-size: 9.5px; color: var(--sw-ink-faint); margin-top: 6px; }
+
+/* -----------------------------------------------------------------------
+   Budget Tracker
+   ----------------------------------------------------------------------- */
+
+.budget-card { padding: 14px 16px; margin-bottom: 10px; }
+.budget-card__head { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.budget-card__icon {
+  width: 32px; height: 32px; border-radius: 10px;
+  background: var(--sw-blue-tint-10);
+  color: var(--sw-blue);
+  display: flex; align-items: center; justify-content: center;
+  flex: none;
+}
+.budget-card__name { font-size: 13.5px; font-weight: 800; margin: 0; }
+.budget-card__cap { font-size: 11.5px; color: var(--sw-ink-faint); margin: 2px 0 0; }
+
+.progress-fill.over { background: linear-gradient(90deg, #e0713f, #c0392b); }
+.budget-over-note {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 11px; font-weight: 700; color: #c0392b;
+  background: rgba(192,57,43,0.12); padding: 4px 10px; border-radius: var(--sw-radius-pill);
+  margin-top: 10px;
+}
+
+/* -----------------------------------------------------------------------
+   Log Spending sheet / Singpass modal (bottom sheet style)
+   ----------------------------------------------------------------------- */
+
+.sheet-backdrop {
+  position: fixed; inset: 0;
+  background: rgba(6, 14, 28, 0.38);
+  backdrop-filter: blur(3px);
+  display: flex; align-items: flex-end; justify-content: center;
+  z-index: 100;
+  animation: sw-fade-in 0.18s ease both;
+}
+.sheet-backdrop.center { align-items: center; padding: 20px; }
+.sheet-backdrop.closing { animation: none; opacity: 0; transition: opacity 0.16s ease; }
+
+.sheet {
+  width: 100%;
+  max-width: 480px;
+  background: rgba(255,255,255,0.86);
+  backdrop-filter: blur(30px) saturate(180%);
+  -webkit-backdrop-filter: blur(30px) saturate(180%);
+  border: 1px solid rgba(255,255,255,0.7);
+  border-radius: 26px 26px 0 0;
+  padding: 22px 20px calc(24px + env(safe-area-inset-bottom, 0px));
+  box-shadow: 0 -14px 40px rgba(20,40,70,0.28);
+}
+.sheet-backdrop.center .sheet { border-radius: var(--sw-radius-xl); padding: 26px 22px; }
+
+.sheet__handle { width: 40px; height: 4px; border-radius: 2px; background: rgba(11,18,32,0.16); margin: 0 auto 16px; }
+.sheet__title { font-size: 17px; font-weight: 800; margin: 0 0 4px; text-align: center; }
+.sheet__subtitle { font-size: 12.5px; color: var(--sw-ink-faint); margin: 0 0 18px; text-align: center; }
+
+.amount-input {
+  width: 100%;
+  font-size: 32px;
+  font-weight: 800;
+  text-align: center;
+  border: none;
+  background: transparent;
+  color: var(--sw-blue-dark);
+  margin-bottom: 16px;
+  outline: none;
+}
+
+.field {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: var(--sw-radius-md);
+  border: 1px solid rgba(11,18,32,0.12);
+  background: rgba(255,255,255,0.7);
+  font-size: 13.5px;
+  margin-bottom: 12px;
+  outline: none;
+}
+.field:focus { border-color: var(--sw-blue); box-shadow: 0 0 0 3px var(--sw-blue-tint-10); }
+
+.singpass-mark {
+  width: 64px; height: 64px; border-radius: 18px;
+  background: linear-gradient(155deg, var(--sw-blue-light), var(--sw-blue));
+  color: #fff; display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 14px; font-weight: 800; font-size: 22px;
+  box-shadow: 0 10px 24px rgba(0,94,186,0.4);
+}
+
+.qr-box {
+  width: 168px; height: 168px; margin: 0 auto 16px;
+  border-radius: var(--sw-radius-md);
+  background:
+    repeating-linear-gradient(0deg, #0b1220 0 6px, transparent 6px 12px),
+    repeating-linear-gradient(90deg, #0b1220 0 6px, transparent 6px 12px);
+  background-blend-mode: multiply;
+  background-color: #fff;
+  border: 1px solid rgba(11,18,32,0.1);
+  position: relative;
+}
+.qr-box::after {
+  content: "";
+  position: absolute; inset: 34%;
+  background: #fff;
+  border-radius: 4px;
+}
+
+.spinner {
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  border: 2px solid rgba(255,255,255,0.5);
+  border-top-color: #fff;
+  animation: sw-spin 0.7s linear infinite;
+  display: inline-block;
+}
+@keyframes sw-spin { to { transform: rotate(360deg); } }
+
+/* Persistent, always-mounted toast -- shown/hidden by toggling .show rather
+   than being added/removed from the DOM, so it never replays a keyframe
+   animation just because some unrelated part of the app re-rendered. */
+.toast-root {
+  position: fixed;
+  left: 50%; bottom: 110px;
+  transform: translate(-50%, 8px);
+  background: rgba(11,18,32,0.88);
+  color: #fff;
+  padding: 10px 18px;
+  border-radius: var(--sw-radius-pill);
+  font-size: 12.5px;
+  font-weight: 600;
+  z-index: 200;
+  box-shadow: 0 10px 26px rgba(0,0,0,0.3);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  max-width: calc(100% - 48px);
+  text-align: center;
+}
+.toast-root.show { opacity: 1; transform: translate(-50%, 0); }
+
+.empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--sw-ink-faint);
+  font-size: 13px;
+}
+
+.skeleton {
+  background: linear-gradient(90deg, rgba(11,18,32,0.06), rgba(11,18,32,0.12), rgba(11,18,32,0.06));
+  background-size: 200% 100%;
+  animation: sw-skeleton 1.2s ease-in-out infinite;
+  border-radius: var(--sw-radius-md);
+}
+@keyframes sw-skeleton {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+
+window.__SAVEWISER_DEMO_DEALS__ = {"government": {"generated_at": "2026-09-02T23:03:58.700927+08:00", "stats": {"scraped": 8, "dropped (irrelevant)": 1, "dropped (editorial/opinion)": 0, "dropped (expired/stale)": 2, "dropped (duplicates)": 2, "published": 3}, "count": 3, "deals": [{"title": "CDC Vouchers 2026: $500 for every Singaporean household", "url": "https://www.cdc.gov.sg/vouchers?utm_source=fb", "source": "CDC Vouchers", "summary": "Claim your CDC vouchers for use at hawkers and heartland merchants. Valid till 23 Sep 2026.", "published": "2026-08-30T23:03:58.697837+08:00", "expires": "2026-09-23T23:59:59+08:00", "expiry_basis": "cued-date", "official": true, "score": 9, "matched_keywords": ["cdc voucher", "hawker", "voucher"], "duplicates": ["https://www.cdc.gov.sg/vouchers/?fbclid=abc123", "https://moneydigest.sg/cdc-vouchers-2026"], "original_price": "", "discounted_price": "", "deal_text": "", "media_category": "", "fingerprint": "d4cd631720e90aa4"}, {"title": "50% off school uniforms with MOE FAS", "url": "https://example.sg/uniform-50", "source": "SingPromos", "summary": "Bursary students get 50 percent off. Valid until 23 Sep 2026.", "published": "2026-08-28T23:03:58.697837+08:00", "expires": "2026-09-23T23:59:59+08:00", "expiry_basis": "cued-date", "official": false, "score": 7, "matched_keywords": ["moe fas", "bursary", "student"], "duplicates": [], "original_price": "", "discounted_price": "", "deal_text": "", "media_category": "", "fingerprint": "4f8334057b796b1a"}, {"title": "5% off school uniforms with MOE FAS", "url": "https://example.sg/uniform-5", "source": "SingPromos", "summary": "General public gets 5 percent off. Valid until 23 Sep 2026.", "published": "2026-08-28T23:03:58.697837+08:00", "expires": "2026-09-23T23:59:59+08:00", "expiry_basis": "cued-date", "official": false, "score": 3, "matched_keywords": ["moe fas"], "duplicates": [], "original_price": "", "discounted_price": "", "deal_text": "", "media_category": "", "fingerprint": "e156e0b4e8c4ad70"}]}, "supermarket": {"generated_at": "2026-09-02T23:03:58.702505+08:00", "stats": {"scraped": 4, "dropped (irrelevant)": 0, "dropped (expired/stale)": 0, "dropped (duplicates)": 0, "published": 4}, "count": 4, "deals": [{"title": "Double Your CHAS Savings", "url": "https://example.sg/megagrocer/chas-discount", "source": "MegaGrocer", "summary": "CHAS cardholders enjoy 6% off at all MegaGrocer stores. Valid until 20 Sep 2026.", "published": null, "expires": "2026-09-20T23:59:59+08:00", "expiry_basis": "cued-date", "official": false, "score": 5, "matched_keywords": ["chas", "% off"], "duplicates": [], "original_price": "", "discounted_price": "", "deal_text": "6% off for CHAS cardholders", "media_category": "", "fingerprint": "51375dd505d6bd1e"}, {"title": "Chocolate Malt Milk Drink, UHT Pack", "url": "https://example.sg/valuemart/promotions?pid=88213400", "source": "ValueMart", "summary": "Save $2.05", "published": null, "expires": null, "expiry_basis": "none", "official": false, "score": 3, "matched_keywords": ["save $"], "duplicates": [], "original_price": "$19.00", "discounted_price": "$16.95", "deal_text": "Save $2.05", "media_category": "", "fingerprint": "eb63a64e87be3b21"}, {"title": "Premium Imported Apples (1kg)", "url": "https://example.sg/valuemart/promotions?pid=13287100", "source": "ValueMart", "summary": "Save $1", "published": null, "expires": null, "expiry_basis": "none", "official": false, "score": 3, "matched_keywords": ["save $"], "duplicates": [], "original_price": "$6.90", "discounted_price": "$5.90", "deal_text": "Save $1", "media_category": "", "fingerprint": "477bb8ab32f70941"}, {"title": "Fresh Selections", "url": "https://example.sg/freshhaven/weekly-ads/Fresh-Selections-1", "source": "FreshHaven Market", "summary": "Fresh Selections (Till 20 Sep)", "published": null, "expires": "2026-09-20T23:59:59+08:00", "expiry_basis": "cued-date", "official": false, "score": 2, "matched_keywords": [], "duplicates": [], "original_price": "", "discounted_price": "", "deal_text": "Weekly ad", "media_category": "", "fingerprint": "16b5f4b52e150a62"}]}, "amenities": {"generated_at": "2026-09-02T23:03:58.703922+08:00", "stats": {"scraped": 6, "dropped (irrelevant)": 0, "dropped (expired/stale)": 0, "dropped (duplicates)": 0, "published": 6}, "count": 6, "deals": [{"title": "FlexZone Fitness", "url": "https://example.sg/flexzone/promotions/free-membership", "source": "FlexZone Fitness", "summary": "Sign up for a free membership month at any FlexZone Fitness Singapore club. Valid until 16 Sep 2026.", "published": "2026-09-01T23:03:58.697612+08:00", "expires": "2026-09-16T23:59:59+08:00", "expiry_basis": "cued-date", "official": false, "score": 7, "matched_keywords": ["fitness", "membership", "free membership"], "duplicates": [], "original_price": "", "discounted_price": "", "deal_text": "Free Membership", "media_category": "", "fingerprint": "abaf42d06d4214d8"}, {"title": "Golden Dumpling House", "url": "https://example.sg/golden-dumpling/promotions/1-for-1-egg-fried-rice", "source": "Golden Dumpling House", "summary": "1-for-1 Egg Fried Rice with every main course ordered, weekday lunches only.", "published": "2026-08-29T23:03:58.697612+08:00", "expires": null, "expiry_basis": "none", "official": false, "score": 5, "matched_keywords": ["fried rice", "1-for-1"], "duplicates": [], "original_price": "", "discounted_price": "", "deal_text": "1-for-1 Egg Fried Rice", "media_category": "", "fingerprint": "ac89a1b60ccd5918"}, {"title": "Trattoria Bella", "url": "https://example.sg/trattoria-bella/promotions/1-for-1", "source": "Trattoria Bella", "summary": "1-for-1 on selected pasta and pizza mains, all-day Tuesdays.", "published": "2026-08-23T23:03:58.697612+08:00", "expires": null, "expiry_basis": "none", "official": false, "score": 4, "matched_keywords": ["1-for-1"], "duplicates": [], "original_price": "", "discounted_price": "", "deal_text": "1-for-1", "media_category": "", "fingerprint": "6b6a5004fae70438"}, {"title": "WellPoint Pharmacy", "url": "https://example.sg/wellpoint/promotions/sanitary-pads", "source": "WellPoint Pharmacy", "summary": "All pad products 20% off, in stores and online.", "published": "2026-08-31T23:03:58.697612+08:00", "expires": null, "expiry_basis": "none", "official": false, "score": 4, "matched_keywords": ["pharmacy", "% off"], "duplicates": [], "original_price": "", "discounted_price": "", "deal_text": "All pad products 20% off", "media_category": "", "fingerprint": "0bb044bffba4c676"}, {"title": "Leaf & Brew Tea Co.", "url": "https://example.sg/leaf-and-brew/promotions/second-cup", "source": "Leaf & Brew Tea Co.", "summary": "8% off your 2nd cup on the Leaf & Brew app, every day.", "published": "2026-08-30T23:03:58.697612+08:00", "expires": null, "expiry_basis": "none", "official": false, "score": 3, "matched_keywords": ["% off"], "duplicates": [], "original_price": "", "discounted_price": "", "deal_text": "8% off 2nd cup", "media_category": "", "fingerprint": "c899462c5bc404b7"}, {"title": "Wok Master Kitchen", "url": "https://example.sg/wok-master/promotions/signature-wok-dishes", "source": "Wok Master Kitchen", "summary": "$2 off any Signature Wok dish, dine-in or takeaway. Valid till 16 Sep 2026.", "published": "2026-08-27T23:03:58.697612+08:00", "expires": "2026-09-16T23:59:59+08:00", "expiry_basis": "cued-date", "official": false, "score": 2, "matched_keywords": [], "duplicates": [], "original_price": "", "discounted_price": "", "deal_text": "$2 off Signature Wok dishes", "media_category": "", "fingerprint": "8c868caebc04d640"}]}};
+(function () {
+  const isMac = navigator.platform.toLowerCase().includes("mac");
+  let state = {
+    singpass: { loggedIn: false, name: "", nric: "" },
+    subscriptions: {},
+    recentActivity: [],
+    budgetCategories: [],
+    expenseLogs: [],
+  };
+
+  window.savewiser = {
+    platform: isMac ? "darwin" : "other",
+    runScraper: (opts) => new Promise((resolve) => {
+      setTimeout(() => resolve(window.__SAVEWISER_DEMO_DEALS__), 500);
+    }),
+    getState: () => Promise.resolve(state),
+    patchState: (patch) => { state = { ...state, ...patch }; return Promise.resolve(state); },
+    appendExpenseLog: (entry) => {
+      state.expenseLogs = [...(state.expenseLogs || []), entry];
+      return Promise.resolve(state);
+    },
+    toggleSubscription: (announcementId, subscribed) => {
+      state.subscriptions[announcementId] = subscribed;
+      return Promise.resolve(state);
+    },
+    pushActivity: (entry) => {
+      state.recentActivity = [entry, ...state.recentActivity].slice(0, 20);
+      return Promise.resolve(state);
+    },
+    setSingpass: (singpass) => { state.singpass = singpass; return Promise.resolve(state); },
+    openExternal: (url) => { window.open(url, "_blank"); },
+  };
+})();
+
+</script>
+<script>
+// SaveWiser - mock / seed data
+//
+// Per the project's own decision (fully mocked/demo data for the initial
+// build): announcements below are curated fixtures, styled on the
+// mockups' persona (Sarah Ong Jin Qi). Deals are NOT mocked here -- those
+// come from the real savewiser_deal_scraper.py pipeline via IPC.
+//
+// Plain global (not an ES module) so it loads with a simple <script> tag --
+// no import/CORS quirks when the page is opened over file:// in Electron.
+
+(function (global) {
+  const PERSONA = {
+    name: "Sarah Ong Jin Qi",
+    displayName: "Sarah Ong",
+    initials: "SO",
+    work: "Administrative Officer",
+    maritalStatus: "Single",
+    location: "Singapore",
+    maskedNric: "S••••567A",
+    income: 2400,
+  };
+
+  // Brand look-up for deal-card styling (no external logo assets -- solid
+  // brand-color gradients + a short mark, in keeping with the offline/demo
+  // approach). Anything not listed falls back to the SaveWiser blue.
+  //
+  // Deal-page entries (amenities/F&B, supermarket) are fictional brand names
+  // -- the scraper's --demo mode fixtures were deliberately rewritten to
+  // avoid using real, trademarked companies in fabricated offers, so this
+  // build is copyright/trademark-safe to show in a presentation. Government
+  // scheme names (CDC Vouchers, MOE FAS, etc.) and the blog/media source
+  // labels used for citation are real -- that's the actual public-scheme and
+  // publisher-attribution content the Announcements feature is built to
+  // surface, not a fabricated commercial deal.
+  const BRAND_STYLES = {
+    "WellPoint Pharmacy": { bg: "linear-gradient(135deg,#f5821f,#e06a10)", mark: "WP" },
+    "FlexZone Fitness": { bg: "linear-gradient(135deg,#0b1220,#2b3546)", mark: "FZ" },
+    "Golden Dumpling House": { bg: "linear-gradient(135deg,#c0392b,#7a1f16)", mark: "GDH" },
+    "Leaf & Brew Tea Co.": { bg: "linear-gradient(135deg,#2f9e44,#1f6e2e)", mark: "L&B" },
+    "Wok Master Kitchen": { bg: "linear-gradient(135deg,#ff7a30,#d94f0a)", mark: "WOK" },
+    "Trattoria Bella": { bg: "linear-gradient(135deg,#2f9e44,#1f6e2e)", mark: "TB" },
+    "ValueMart": { bg: "linear-gradient(135deg,#e2231a,#a3160f)", mark: "ValueMart" },
+    "MegaGrocer": { bg: "linear-gradient(135deg,#f5a623,#c97e0a)", mark: "MEGA" },
+    "FreshHaven Market": { bg: "linear-gradient(135deg,#2f9e44,#1f6e2e)", mark: "FreshHaven" },
+    "CDC Vouchers": { bg: "linear-gradient(135deg,#4a9fe0,#005EBA)", mark: "CDC" },
+    "SingPromos": { bg: "linear-gradient(135deg,#4a9fe0,#005EBA)", mark: "SG" },
+    "MoneyDigest SG": { bg: "linear-gradient(135deg,#4a9fe0,#005EBA)", mark: "$" },
+    "Great Deals SG": { bg: "linear-gradient(135deg,#4a9fe0,#005EBA)", mark: "%" },
+    "SG Budget Babe": { bg: "linear-gradient(135deg,#4a9fe0,#005EBA)", mark: "SG" },
+    "MSF Newsroom": { bg: "linear-gradient(135deg,#005EBA,#00447f)", mark: "MSF" },
+  };
+
+  function brandStyle(source) {
+    return BRAND_STYLES[source] || {
+      bg: "linear-gradient(135deg,#4a9fe0,#005EBA)",
+      mark: (source || "SW").slice(0, 2).toUpperCase(),
+    };
+  }
+
+  // Curated government financial-assistance announcements -- always shown,
+  // merged with (and de-duplicated against) whatever the scraper's
+  // official=true output turns up on a given run.
+  const CURATED_ANNOUNCEMENTS = [
+    {
+      id: "budget-2026-cost-of-living",
+      title: "Budget 2026: Enhanced Cost-of-Living Special Payment",
+      summary: "Eligible Singaporeans aged 21 and above will receive an extra cash payment to help with daily expenses, on top of existing Assurance Package support.",
+      scheme: "Cost-of-Living Support",
+      eligible: (p) => true,
+      eligibilityNote: "All Singaporean adults are eligible; amount is income-tiered.",
+    },
+    {
+      id: "gst-voucher",
+      title: "GST Voucher",
+      summary: "Cash, MediSave top-ups and U-Save rebates for lower- and middle-income Singaporean households to offset GST.",
+      scheme: "GST Voucher",
+      eligible: (p) => p.income <= 3000,
+      eligibilityNote: "You look eligible based on your income bracket.",
+    },
+    {
+      id: "assurance-package",
+      title: "Assurance Package (AP)",
+      summary: "A multi-year package of cash payouts, U-Save and S&CC rebates, and CDC vouchers to help Singaporeans with the rising cost of living.",
+      scheme: "Assurance Package",
+      eligible: (p) => true,
+      eligibilityNote: "All Singaporean households benefit; amount varies by income and property.",
+    },
+    {
+      id: "comcare",
+      title: "ComCare Financial Assistance",
+      summary: "Short-to-medium-term financial help for lower-income individuals and families, covering cash grants, medical subsidies and more.",
+      scheme: "ComCare",
+      eligible: (p) => p.income <= 2600,
+      eligibilityNote: "Your income falls within ComCare's typical assistance range.",
+    },
+  ];
+
+  function seedRecentActivity() {
+    return [
+      { id: "seed-1", text: "You are currently eligible for ComCare Assistance.", linkLabel: "Tap here for more.", route: "announcements" },
+      { id: "seed-2", text: "You used the deal:", linkLabel: "Trattoria Bella 1-for-1.", route: "deals" },
+      { id: "seed-3", text: "You stayed under budget on", linkLabel: "Groceries last month!", route: "budget" },
+    ];
+  }
+
+  // Default budget categories -- users can add their own on top of these.
+  // monthlyCap is null (unset) until the user chooses one; a couple of
+  // defaults ship with a seeded cap so the Budget Tracker isn't empty on
+  // first run.
+  function seedBudgetCategories() {
+    return [
+      { id: "groceries", name: "Groceries", monthlyCap: 250, icon: "cart" },
+      { id: "transport", name: "Transport", monthlyCap: 100, icon: "car" },
+      { id: "food", name: "Food", monthlyCap: 150, icon: "utensils" },
+      { id: "household", name: "Household", monthlyCap: 120, icon: "home" },
+      { id: "entertainment", name: "Entertainment", monthlyCap: 80, icon: "film" },
+      { id: "others", name: "Others", monthlyCap: null, icon: "dots" },
+    ];
+  }
+
+  // Seed expense history: some LAST month (already elapsed, so the badge
+  // logic -- "stayed under the cap for a completed month" -- has something
+  // to show unlocked immediately) and some THIS month (in progress, so the
+  // live progress bars aren't empty either). Transport and Entertainment
+  // are deliberately seeded to demonstrate the "went over" state as well.
+  function seedExpenseLogs() {
+    const now = new Date();
+    const todayStr = now.toISOString().slice(0, 10);
+    const prevMonthDate = new Date(now.getFullYear(), now.getMonth() - 1, 15);
+    const lastMonthKey = prevMonthDate.toISOString().slice(0, 7);
+    return [
+      // last month -- elapsed
+      { date: `${lastMonthKey}-10`, amount: 210, categoryId: "groceries", note: "" },
+      { date: `${lastMonthKey}-15`, amount: 130, categoryId: "transport", note: "" }, // over its $100 cap
+      { date: `${lastMonthKey}-20`, amount: 95, categoryId: "household", note: "" },
+      // this month -- in progress
+      { date: todayStr, amount: 90, categoryId: "groceries", note: "" },
+      { date: todayStr, amount: 35, categoryId: "transport", note: "" },
+      { date: todayStr, amount: 55, categoryId: "food", note: "" },
+      { date: todayStr, amount: 40, categoryId: "household", note: "" },
+      { date: todayStr, amount: 95, categoryId: "entertainment", note: "" }, // already over its $80 cap
+    ];
+  }
+
+  global.SaveWiserMock = {
+    PERSONA,
+    BRAND_STYLES,
+    brandStyle,
+    CURATED_ANNOUNCEMENTS,
+    seedRecentActivity,
+    seedBudgetCategories,
+    seedExpenseLogs,
+  };
+})(window);
+
+</script>
+<script>
+// SaveWiser - renderer application
+//
+// Plain-JS single-page app (no framework/build step -- keeps `npm start`
+// down to just installing Electron). Talks to the main process only
+// through window.savewiser (see preload.js); never touches Node directly.
+//
+// Rendering architecture: the DOM has three independent, persistent
+// regions -- #sw-shell (topbar + current page + bottom nav), #sw-overlay
+// (Singpass modal / log-savings sheet / search sheet), and #sw-toast.
+// Each is updated ONLY when its own state changes. Earlier builds rebuilt
+// the entire app on every click/keystroke and relied on a CSS @keyframes
+// animation on `.page` to "fade in" -- since that keyframe replayed on
+// every single re-render (including ones unrelated to navigation, like
+// typing in search or a toast appearing), it looked like the whole screen
+// flashing. Keeping the regions separate, and animating shell swaps with a
+// JS-driven opacity/transform transition instead of a keyframe, means nav
+// transitions stay smooth on purpose while everything else updates
+// instantly with no flash.
+
+(function () {
+  const M = window.SaveWiserMock;
+  const api = window.savewiser;
+
+  // ---------------------------------------------------------------------
+  // Icons (small inline SVGs, feather-style). Explicit width/height keep
+  // every icon a small, consistent size regardless of where it's dropped
+  // in -- nothing here should ever render at an SVG's unconstrained
+  // default size.
+  // ---------------------------------------------------------------------
+  const ICON = {
+    home: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11.5 12 4l9 7.5"/><path d="M5 10v9a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1v-9"/></svg>',
+    plus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
+    user: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20c1.4-3.6 4.4-5.5 7.5-5.5s6.1 1.9 7.5 5.5"/></svg>',
+    search: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>',
+    chevron: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>',
+    check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>',
+    refresh: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 4v6h-6"/></svg>',
+    bell: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 1 1 12 0c0 5 2 6 2 6H4s2-1 2-6Z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg>',
+    cart: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/><path d="M2.5 3h2.6l2.1 11.4a2 2 0 0 0 2 1.6h8.1a2 2 0 0 0 2-1.6L21 7H6"/></svg>',
+    car: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 16V11l2.2-5.2A2 2 0 0 1 7 4.6h10a2 2 0 0 1 1.8 1.2L21 11v5"/><path d="M3 16h18v2.5a1 1 0 0 1-1 1h-1.5a1 1 0 0 1-1-1V17H6.5v1.5a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1Z"/><circle cx="7.5" cy="13.5" r="1.3"/><circle cx="16.5" cy="13.5" r="1.3"/></svg>',
+    utensils: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3v7a2 2 0 0 0 2 2v9M6 3v7M9 3v7M6 10h3M17 3c-1.7 0-3 2-3 5s1.3 5 3 5v8"/></svg>',
+    film: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="15" rx="1.5"/><path d="M3 9h18M3 15h18M8 4.5v15M16 4.5v15"/></svg>',
+    dots: '<svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>',
+  };
+  function icon(name, size) {
+    const svg = ICON[name];
+    if (!svg) return "";
+    const s = size || 16;
+    return svg.replace("<svg ", `<svg width="${s}" height="${s}" `);
+  }
+  // The topbar mark: the app's own logo image when bundled, else a plain
+  // "SW" monogram fallback so the app never ships a broken <img>.
+  function brandMarkHtml() {
+    return `<img src="data:image/png;base64,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" alt="SaveWiser" onerror="this.replaceWith(Object.assign(document.createElement('span'),{textContent:'SW',style:'font-weight:800;font-size:10px;color:var(--sw-blue)'}))" />`;
+  }
+
+  // ---------------------------------------------------------------------
+  // State
+  // ---------------------------------------------------------------------
+  const S = {
+    route: "home",
+    dealsTab: "all",
+    deals: { government: [], supermarket: [], amenities: [], loading: false, error: null, lastRun: null },
+    singpass: { loggedIn: false, name: "", nric: "" },
+    subscriptions: {},
+    recentActivity: [],
+    usedDeals: [],
+    singpassStage: "idle", // idle | scanning | success
+    expandedAnnouncement: null,
+    searchOpen: false,
+    searchQuery: "",
+    logSheetOpen: false,
+    budgetCategories: [],
+    expenseLogs: [],
+    expenseCategoryId: null,
+  };
+
+  function todayISO() {
+    return new Date().toISOString().slice(0, 10);
+  }
+  function monthLabel(iso) {
+    return new Date(iso + "T00:00:00").toLocaleString("en-SG", { month: "short" });
+  }
+  function fmtMoney(n) {
+    return "$" + Number(n || 0).toLocaleString("en-SG", { maximumFractionDigits: 2 });
+  }
+  function escapeHtml(s) {
+    return String(s || "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  }
+
+  // ---------------------------------------------------------------------
+  // Boot / persistence
+  // ---------------------------------------------------------------------
+  async function boot() {
+    document.documentElement.classList.add(api.platform === "darwin" ? "platform-mac" : "platform-other");
+    buildStaticShell();
+
+    const persisted = await api.getState();
+    Object.assign(S, {
+      singpass: persisted.singpass || S.singpass,
+      subscriptions: persisted.subscriptions || {},
+      recentActivity: persisted.recentActivity && persisted.recentActivity.length ? persisted.recentActivity : M.seedRecentActivity(),
+      budgetCategories: persisted.budgetCategories && persisted.budgetCategories.length ? persisted.budgetCategories : M.seedBudgetCategories(),
+      expenseLogs: persisted.expenseLogs && persisted.expenseLogs.length ? persisted.expenseLogs : M.seedExpenseLogs(),
+    });
+
+    if (!persisted.recentActivity || !persisted.recentActivity.length) {
+      await api.patchState({ recentActivity: S.recentActivity });
+    }
+    if (!persisted.budgetCategories || !persisted.budgetCategories.length) {
+      await api.patchState({ budgetCategories: S.budgetCategories });
+    }
+    if (!persisted.expenseLogs || !persisted.expenseLogs.length) {
+      await api.patchState({ expenseLogs: S.expenseLogs });
+    }
+
+    S.expenseCategoryId = S.budgetCategories.length ? S.budgetCategories[0].id : null;
+
+    renderPage("none");
+    loadDeals(true);
+  }
+
+  async function loadDeals(silent) {
+    S.deals.loading = true;
+    S.deals.error = null;
+    if (!silent) renderPage("soft");
+    try {
+      const result = await api.runScraper({ demo: true });
+      S.deals.government = (result.government && result.government.deals) || [];
+      S.deals.supermarket = (result.supermarket && result.supermarket.deals) || [];
+      S.deals.amenities = (result.amenities && result.amenities.deals) || [];
+      S.deals.lastRun = new Date();
+    } catch (err) {
+      S.deals.error = err.message || String(err);
+    } finally {
+      S.deals.loading = false;
+      renderPage("soft");
+    }
+  }
+
+  // ---------------------------------------------------------------------
+  // Derived data
+  // ---------------------------------------------------------------------
+  function allDeals() {
+    return [
+      ...S.deals.amenities.map((d) => ({ ...d, category: "amenities" })),
+      ...S.deals.supermarket.map((d) => ({ ...d, category: "supermarket" })),
+      ...S.deals.government.map((d) => ({ ...d, category: "government" })),
+    ];
+  }
+
+  function dealsForTab(tab) {
+    const all = allDeals();
+    if (tab === "all") return all;
+    return all.filter((d) => d.category === tab);
+  }
+
+  function mergedAnnouncements() {
+    const curated = M.CURATED_ANNOUNCEMENTS.map((a) => ({ ...a, live: false }));
+    const live = S.deals.government.map((d) => ({
+      id: "live-" + d.fingerprint,
+      title: d.title,
+      summary: d.summary || "Surfaced by the SaveWiser scraper from an official source.",
+      scheme: d.source,
+      eligible: () => true,
+      eligibilityNote: "Surfaced live by the SaveWiser deals scraper -- check the source for full eligibility criteria.",
+      live: true,
+      url: d.url,
+    }));
+    return [...curated, ...live];
+  }
+
+  function monthlySpendTotals() {
+    const byMonth = {};
+    S.expenseLogs.forEach((l) => {
+      const key = l.date.slice(0, 7);
+      byMonth[key] = (byMonth[key] || 0) + Number(l.amount);
+    });
+    return Object.keys(byMonth).sort().slice(-6).map((key) => ({
+      key, label: monthLabel(key + "-01"), value: byMonth[key],
+    }));
+  }
+
+  // Themed badge name/emoji per default category id -- a custom category
+  // falls back to a generic "<Name> Champion" badge.
+  const BUDGET_BADGE_META = {
+    groceries: { emoji: "🛒", name: "Grocery Guru" },
+    transport: { emoji: "🚌", name: "Transit Saver" },
+    food: { emoji: "🍜", name: "Foodie on Budget" },
+    household: { emoji: "🏠", name: "Home Economist" },
+    entertainment: { emoji: "🎬", name: "Fun Fund Master" },
+    others: { emoji: "⭐", name: "Budget Boss" },
+  };
+  function budgetBadgeMeta(cat) {
+    return BUDGET_BADGE_META[cat.id] || { emoji: "🏅", name: `${cat.name} Champion` };
+  }
+
+  // ---------------------------------------------------------------------
+  // Budget Tracker derived data
+  //
+  // A budget "challenge" isn't a separate stored object -- it's just a
+  // category with a monthlyCap. Its status is computed live from
+  // expenseLogs rather than a stored completed flag, the same way the
+  // Monthly Spending chart is computed from expenseLogs, so it can never
+  // drift out of sync with the underlying log entries.
+  // ---------------------------------------------------------------------
+  function expenseSpentFor(categoryId, monthKey) {
+    return S.expenseLogs
+      .filter((e) => e.categoryId === categoryId && e.date.slice(0, 7) === monthKey)
+      .reduce((sum, e) => sum + Number(e.amount), 0);
+  }
+
+  function expenseMonthsFor(categoryId) {
+    const keys = new Set();
+    S.expenseLogs.forEach((e) => { if (e.categoryId === categoryId) keys.add(e.date.slice(0, 7)); });
+    return Array.from(keys).sort();
+  }
+
+  // A category's badge unlocks the first time a fully-elapsed past month
+  // (not the current, still-in-progress one) stayed at or under the cap --
+  // i.e. the user "completed the challenge" of not overspending that month.
+  function budgetBadgeEarned(cat) {
+    if (cat.monthlyCap == null) return false;
+    const thisMonth = todayISO().slice(0, 7);
+    return expenseMonthsFor(cat.id).some((mk) => mk < thisMonth && expenseSpentFor(cat.id, mk) <= cat.monthlyCap);
+  }
+
+  function budgetCategoriesWithCap() {
+    return S.budgetCategories.filter((c) => c.monthlyCap != null);
+  }
+
+  // ---------------------------------------------------------------------
+  // Actions
+  // ---------------------------------------------------------------------
+  function go(route) {
+    if (route === S.route) return;
+    S.route = route;
+    S.expandedAnnouncement = null;
+    renderPage("nav");
+  }
+
+  function pushActivity(text, linkLabel, route) {
+    const entry = { id: "a-" + Date.now(), text, linkLabel, route };
+    S.recentActivity = [entry, ...S.recentActivity].slice(0, 20);
+    api.pushActivity(entry);
+  }
+
+  function useDeal(deal) {
+    const label = deal.deal_text ? `${deal.source} ${deal.deal_text}` : deal.title;
+    S.usedDeals = [{ ...deal, usedAt: Date.now() }, ...S.usedDeals].slice(0, 12);
+    pushActivity("You used the deal:", label + ".", "deals");
+    showToast(`Marked "${label}" as used ✅`);
+    if (deal.url) api.openExternal(deal.url);
+  }
+
+  async function toggleSubscribe(a) {
+    const next = !S.subscriptions[a.id];
+    S.subscriptions = { ...S.subscriptions, [a.id]: next };
+    renderPage("none");
+    await api.toggleSubscription(a.id, next);
+    showToast(next ? `Subscribed to updates for "${a.title}"` : `Unsubscribed from "${a.title}"`);
+    if (next) pushActivity("You subscribed to notifications for", a.title + ".", "announcements");
+  }
+
+  function openSingpassModal() {
+    S.singpassStage = "scanning";
+    setOverlay(singpassShellHtml());
+    setTimeout(() => {
+      S.singpassStage = "success";
+      const body = document.getElementById("sw-singpass-body");
+      fadeSwap(body, singpassBodyHtml());
+    }, 1700);
+  }
+
+  async function confirmSingpassLogin() {
+    S.singpass = { loggedIn: true, name: M.PERSONA.name, nric: M.PERSONA.maskedNric };
+    S.singpassStage = "idle";
+    closeOverlay();
+    renderPage("soft");
+    await api.setSingpass(S.singpass);
+    pushActivity("You logged in with", "Singpass.", "profile");
+    showToast("Logged in with Singpass ✅");
+  }
+
+  function closeSingpassModal() {
+    S.singpassStage = "idle";
+    closeOverlay();
+  }
+
+  function openLogSheet() {
+    S.logSheetOpen = true;
+    if (!S.expenseCategoryId && S.budgetCategories.length) S.expenseCategoryId = S.budgetCategories[0].id;
+    setOverlay(logSheetHtml());
+    focusSoon("sw-amount");
+  }
+  function closeLogSheet() {
+    S.logSheetOpen = false;
+    closeOverlay();
+  }
+  function pickExpenseCategory(categoryId) {
+    S.expenseCategoryId = categoryId;
+    setOverlay(logSheetHtml());
+  }
+
+  async function submitSpendingLog(amount, note, categoryId) {
+    if (!amount || amount <= 0 || !categoryId) return;
+    const cat = S.budgetCategories.find((c) => c.id === categoryId);
+    const entry = { date: todayISO(), amount, note: note || "", categoryId };
+    S.expenseLogs = [...S.expenseLogs, entry];
+    await api.appendExpenseLog(entry);
+
+    const monthKey = todayISO().slice(0, 7);
+    const spentNow = expenseSpentFor(categoryId, monthKey);
+    const justWentOver = cat && cat.monthlyCap != null && spentNow > cat.monthlyCap && (spentNow - amount) <= cat.monthlyCap;
+
+    pushActivity("You logged spending:", `${fmtMoney(amount)} on ${cat ? cat.name : "spending"}.`, "budget");
+
+    S.logSheetOpen = false;
+    closeOverlay();
+    renderPage("soft");
+
+    if (cat && cat.monthlyCap != null && spentNow > cat.monthlyCap) {
+      showToast(justWentOver
+        ? `⚠️ You've gone over your ${cat.name} budget this month`
+        : `⚠️ Still over your ${cat.name} budget (${fmtMoney(spentNow)} / ${fmtMoney(cat.monthlyCap)})`);
+    } else {
+      showToast(`Logged ${fmtMoney(amount)} to ${cat ? cat.name : "spending"}`);
+    }
+  }
+
+  function slugifyCategoryName(name) {
+    const base = name.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+    return base || "category";
+  }
+
+  async function addBudgetCategory(name) {
+    let id = slugifyCategoryName(name);
+    if (S.budgetCategories.some((c) => c.id === id)) id = `${id}-${Date.now()}`;
+    const cat = { id, name: name.trim(), monthlyCap: null, icon: "dots", isCustom: true };
+    S.budgetCategories = [...S.budgetCategories, cat];
+    await api.patchState({ budgetCategories: S.budgetCategories });
+    closeOverlay();
+    renderPage("soft");
+    showToast(`Added "${cat.name}" category`);
+  }
+
+  async function setCategoryCap(categoryId, amount) {
+    S.budgetCategories = S.budgetCategories.map((c) => c.id === categoryId ? { ...c, monthlyCap: amount } : c);
+    await api.patchState({ budgetCategories: S.budgetCategories });
+    closeOverlay();
+    renderPage("soft");
+    const cat = S.budgetCategories.find((c) => c.id === categoryId);
+    if (!cat) return;
+    showToast(amount != null
+      ? `Set ${cat.name} limit to ${fmtMoney(amount)}/month`
+      : `Removed ${cat.name}'s monthly limit`);
+  }
+
+  // ---------------------------------------------------------------------
+  // Shared chrome: topbar + bottom nav
+  // ---------------------------------------------------------------------
+  function topbarHtml() {
+    const name = S.singpass.loggedIn ? S.singpass.name.split(" ")[0].toUpperCase() : M.PERSONA.displayName.split(" ")[0].toUpperCase();
+    return `
+      <div class="topbar">
+        <div class="topbar__icon">${brandMarkHtml()}</div>
+        <div class="topbar__text">Welcome back, <b>${escapeHtml(name)}!</b></div>
+        <div class="topbar__actions">
+          <button class="topbar__btn" data-action="open-search" title="Search">${icon("search", 15)}</button>
+        </div>
+      </div>`;
+  }
+
+  function bottomNavHtml() {
+    const item = (route, iconName, label) => `
+      <button class="navbtn ${S.route === route ? "active" : ""}" data-action="go" data-route="${route}">
+        ${icon(iconName)}<span>${label}</span>
+      </button>`;
+    return `
+      <nav class="bottomnav">
+        ${item("home", "home", "Home")}
+        <button class="navbtn navbtn--fab" data-action="open-log-sheet">${icon("plus", 20)}</button>
+        ${item("profile", "user", "Profile")}
+      </nav>`;
+  }
+
+  // ---------------------------------------------------------------------
+  // Pages
+  // ---------------------------------------------------------------------
+  function dealCardHtml(d) {
+    const b = M.brandStyle(d.source);
+    const title = d.deal_text ? d.source : d.title;
+    const desc = d.deal_text ? d.deal_text : (d.summary ? d.summary.slice(0, 70) + (d.summary.length > 70 ? "…" : "") : d.source);
+    return `
+      <div class="deal-card" data-action="use-deal" data-fingerprint="${d.fingerprint}">
+        <div class="deal-card__media" style="background:${b.bg}">${escapeHtml(b.mark)}</div>
+        <div class="deal-card__body">
+          <p class="deal-card__title">${escapeHtml(title)}</p>
+          <p class="deal-card__desc">${escapeHtml(desc)}</p>
+          <span class="deal-card__badge">${escapeHtml(categoryLabel(d.category))}</span>
+        </div>
+      </div>`;
+  }
+
+  function categoryLabel(cat) {
+    return { amenities: "Amenities & F&B", supermarket: "Supermarket", government: "Gov Assistance" }[cat] || cat;
+  }
+
+  function chartHtml(months) {
+    const max = Math.max(1, ...months.map((m) => m.value));
+    return `
+      <div class="chart">
+        ${months.map((m) => `
+          <div class="chart__bar-wrap">
+            <div class="chart__bar" style="height:${Math.max(6, (m.value / max) * 100)}%" title="${fmtMoney(m.value)}"></div>
+            <span class="chart__label">${m.label}</span>
+          </div>`).join("")}
+      </div>`;
+  }
+
+  function homePage() {
+    const dealsPreview = dealsForTab("amenities").slice(0, 4);
+    const activity = S.recentActivity.slice(0, 4);
+    return `
+      ${topbarHtml()}
+      <h1 class="section-title">Your SaveWiser Dashboard</h1>
+
+      <div class="glass card">
+        <p class="section-title" style="margin:0 0 10px;font-size:15px;">Recent Activity</p>
+        <ul class="activity-list">
+          ${activity.length ? activity.map((a) => `
+            <li>${escapeHtml(a.text)} <a href="#" data-action="go" data-route="${a.route}">${escapeHtml(a.linkLabel)}</a></li>
+          `).join("") : `<li>No activity yet -- log a deal or a saving to get started.</li>`}
+        </ul>
+      </div>
+
+      <div class="glass-blue card">
+        <p class="section-title" style="margin:0 0 12px;color:#fff;font-size:15px;">Lobang Radar</p>
+        ${S.deals.loading && !dealsPreview.length ? skeletonGrid() : `<div class="deal-grid">${dealsPreview.map(dealCardHtml).join("") || `<div class="empty-state" style="color:#fff;">No deals yet.</div>`}</div>`}
+        <div style="text-align:center;margin-top:12px;">
+          <a href="#" data-action="go" data-route="deals" style="color:#fff;text-decoration:underline;font-weight:700;font-size:12.5px;">Tap here to see more</a>
+        </div>
+      </div>
+
+      <div class="glass-blue card">
+        <p class="section-title" style="margin:0 0 12px;color:#fff;font-size:15px;">Budget Tracker</p>
+        ${budgetCategoriesWithCap().slice(0, 3).map(budgetMiniHtml).join("") || `<div class="empty-state" style="color:#fff;">Set a monthly limit on a category to start tracking.</div>`}
+        <div style="text-align:center;margin-top:8px;">
+          <a href="#" data-action="go" data-route="budget" style="color:#fff;text-decoration:underline;font-weight:700;font-size:12.5px;">Tap here to see more</a>
+        </div>
+      </div>
+    `;
+  }
+
+  function budgetMiniHtml(cat) {
+    const monthKey = todayISO().slice(0, 7);
+    const spent = expenseSpentFor(cat.id, monthKey);
+    const over = spent > cat.monthlyCap;
+    const pct = Math.min(100, Math.round((spent / cat.monthlyCap) * 100));
+    return `
+      <div style="background:rgba(255,255,255,0.14);border-radius:14px;padding:12px;margin-bottom:8px;cursor:pointer;" data-action="go" data-route="budget">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <b style="font-size:13px;color:#fff;">${escapeHtml(cat.name)}</b>
+          ${over ? `<span style="font-size:10.5px;font-weight:800;color:#ffe3dd;">OVER</span>` : ""}
+        </div>
+        <div class="progress-track" style="background:rgba(255,255,255,0.25);margin-top:6px;">
+          <div class="progress-fill ${over ? "over" : ""}" style="background:${over ? "" : "#fff"};width:${pct}%"></div>
+        </div>
+        <div class="progress-label" style="color:rgba(255,255,255,0.85);"><span>${fmtMoney(spent)} spent</span><span>Limit: ${fmtMoney(cat.monthlyCap)}</span></div>
+      </div>`;
+  }
+
+  function skeletonGrid() {
+    return `<div class="deal-grid">${[1,2,3,4].map(() => `<div class="skeleton" style="height:150px;"></div>`).join("")}</div>`;
+  }
+
+  function dealsPage() {
+    const tabs = [["all", "All"], ["amenities", "Amenities & F&B"], ["supermarket", "Supermarket"], ["government", "Gov Assistance"]];
+    const deals = dealsForTab(S.dealsTab);
+    return `
+      ${topbarHtml()}
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:18px;">
+        <h1 class="section-title" style="margin:0;">Lobang Radar</h1>
+        <button class="btn btn--glass btn--sm" data-action="refresh-deals" ${S.deals.loading ? "disabled" : ""}>
+          ${S.deals.loading ? '<span class="spinner" style="border-top-color:var(--sw-blue);border-color:rgba(0,94,186,0.3);"></span>' : icon("refresh", 14)} Refresh
+        </button>
+      </div>
+      <p class="section-subtitle">AI-curated by the SaveWiser deal scraper -- amenities, food &amp; drink, supermarket promos, and official government assistance schemes, all in one feed.</p>
+      <div class="tabs">
+        ${tabs.map(([id, label]) => `<button class="tab ${S.dealsTab === id ? "active" : ""}" data-action="set-deals-tab" data-tab="${id}">${label}</button>`).join("")}
+      </div>
+      ${S.deals.error ? `<div class="empty-state">Couldn't load deals: ${escapeHtml(S.deals.error)}</div>` : ""}
+      ${S.deals.loading && !deals.length ? skeletonGrid() : (
+        deals.length
+          ? `<div class="deal-grid">${deals.map(dealCardHtml).join("")}</div>`
+          : `<div class="empty-state">No deals in this category right now.</div>`
+      )}
+    `;
+  }
+
+  function announcementItemHtml(a) {
+    const expanded = S.expandedAnnouncement === a.id;
+    const eligible = a.eligible(M.PERSONA);
+    const subscribed = !!S.subscriptions[a.id];
+    return `
+      <div class="glass card" style="margin-bottom:12px;">
+        <div class="list-item" style="border:none;padding:0;cursor:pointer;" data-action="toggle-announcement" data-id="${a.id}">
+          <div class="list-item__icon">${icon("bell", 15)}</div>
+          <div class="list-item__body">
+            <p class="list-item__title">${escapeHtml(a.title)} ${a.live ? '<span class="deal-card__badge" style="margin-left:4px;">Live</span>' : ""}</p>
+            <p class="list-item__meta">${escapeHtml(a.scheme)}</p>
+          </div>
+          <span class="list-item__chevron" style="transform:rotate(${expanded ? 90 : 0}deg);transition:transform .15s;">${icon("chevron", 15)}</span>
+        </div>
+        ${expanded ? `
+          <div style="margin-top:12px;padding-top:12px;border-top:1px solid rgba(11,18,32,0.08);">
+            <p style="font-size:12.5px;color:var(--sw-ink-soft);margin:0 0 10px;line-height:1.5;">${escapeHtml(a.summary)}</p>
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+              <span style="color:${eligible ? "#1a9c5c" : "var(--sw-ink-faint)"};display:flex;">${icon("check", 15)}</span>
+              <span style="font-size:12px;color:var(--sw-ink-soft);">${escapeHtml(a.eligibilityNote)}</span>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+              <span style="font-size:13px;font-weight:700;">Notify me about updates</span>
+              <button class="toggle ${subscribed ? "on" : ""}" data-action="toggle-subscribe" data-id="${a.id}"></button>
+            </div>
+          </div>
+        ` : ""}
+      </div>`;
+  }
+
+  function announcementsPage() {
+    if (!S.singpass.loggedIn) {
+      return `
+        ${topbarHtml()}
+        <h1 class="section-title">Announcements</h1>
+        <div class="glass-blue card" style="text-align:center;padding:32px 20px;">
+          <div class="singpass-mark">SP</div>
+          <p style="font-weight:800;font-size:16px;margin:0 0 6px;color:#fff;">Login with Singpass</p>
+          <p style="font-size:12.5px;color:rgba(255,255,255,0.85);margin:0 0 18px;line-height:1.5;">
+            Verify it's you to subscribe to notifications about new government financial
+            assistance schemes as soon as they're announced.
+          </p>
+          <button class="btn btn--block" style="background:#fff;color:var(--sw-blue-dark);" data-action="open-singpass">Login with Singpass</button>
+        </div>
+      `;
+    }
+    const announcements = mergedAnnouncements();
+    return `
+      ${topbarHtml()}
+      <h1 class="section-title">Announcements</h1>
+      <p class="section-subtitle">Subscribe to a scheme to get notified the moment SaveWiser sees an update.</p>
+      ${announcements.map(announcementItemHtml).join("")}
+    `;
+  }
+
+  function badgesRowHtml() {
+    const cats = budgetCategoriesWithCap();
+    if (!cats.length) return "";
+    return `
+      <div class="glass card">
+        <p class="section-title" style="margin:0 0 10px;font-size:15px;">Your Badges</p>
+        <div class="badge-strip">
+          ${cats.map((cat) => {
+            const earned = budgetBadgeEarned(cat);
+            const meta = budgetBadgeMeta(cat);
+            return `
+              <div class="badge-chip ${earned ? "" : "locked"}" title="${escapeHtml(cat.name)} budget badge">
+                <div class="badge-chip__mark">${earned ? meta.emoji : "🔒"}</div>
+                <span class="badge-chip__name">${escapeHtml(meta.name)}</span>
+              </div>`;
+          }).join("")}
+        </div>
+      </div>`;
+  }
+
+  // ---------------------------------------------------------------------
+  // Budget Tracker
+  //
+  // Each category is a lightweight, user-set "don't spend more than $X"
+  // challenge: instead of a savings goal you're trying to hit, it's a cap
+  // you're trying to stay under. Status is computed live in
+  // budgetBadgeEarned()/expenseSpentFor() above, from the same expenseLogs
+  // list a Log Spending entry appends to -- no separate "completed" flag to
+  // fall out of sync.
+  // ---------------------------------------------------------------------
+  function budgetCategoryCardHtml(cat) {
+    const monthKey = todayISO().slice(0, 7);
+    const spent = expenseSpentFor(cat.id, monthKey);
+    const cap = cat.monthlyCap;
+    const pct = cap ? Math.min(100, Math.round((spent / cap) * 100)) : 0;
+    const over = cap != null && spent > cap;
+    const earned = budgetBadgeEarned(cat);
+    return `
+      <div class="glass budget-card">
+        <div class="budget-card__head">
+          <div class="budget-card__icon">${icon(cat.icon || "dots", 16)}</div>
+          <div style="flex:1;min-width:0;">
+            <p class="budget-card__name">${escapeHtml(cat.name)}</p>
+            <p class="budget-card__cap">${cap != null ? `${fmtMoney(spent)} of ${fmtMoney(cap)} this month` : "No monthly limit set"}</p>
+          </div>
+          ${earned ? `<span title="${escapeHtml(budgetBadgeMeta(cat).name)} badge earned" style="font-size:17px;flex:none;">${budgetBadgeMeta(cat).emoji}</span>` : ""}
+          <button class="btn btn--glass btn--sm" style="flex:none;" data-action="open-set-cap" data-id="${cat.id}">${cap != null ? "Edit" : "Set limit"}</button>
+        </div>
+        ${cap != null ? `
+          <div class="progress-track"><div class="progress-fill ${over ? "over" : ""}" style="width:${pct}%"></div></div>
+          <div class="progress-label">
+            <span>${fmtMoney(spent)} spent</span>
+            <span class="progress-pct" style="${over ? "color:#c0392b;" : ""}">${pct}%</span>
+            <span>${over ? `Over by ${fmtMoney(spent - cap)}` : `${fmtMoney(cap - spent)} left`}</span>
+          </div>
+          ${over ? `<div class="budget-over-note">⚠️ Over budget this month</div>` : ""}
+        ` : ""}
+      </div>`;
+  }
+
+  function budgetPage() {
+    const monthLbl = new Date().toLocaleString("en-SG", { month: "long", year: "numeric" });
+    const badgeCount = S.budgetCategories.filter(budgetBadgeEarned).length;
+    const months = monthlySpendTotals();
+    return `
+      ${topbarHtml()}
+      <h1 class="section-title">Budget Tracker</h1>
+      <p class="section-subtitle">Set a monthly limit per category. Stay under it for the whole month and you'll earn a badge -- go over, and you'll see it here right away.</p>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin:2px 0 12px;">
+        <b style="font-size:13px;color:var(--sw-ink-soft);">${escapeHtml(monthLbl)}</b>
+        <button class="btn btn--primary btn--sm" data-action="open-log-sheet">+ Log Spending</button>
+      </div>
+      ${S.budgetCategories.map(budgetCategoryCardHtml).join("")}
+      <button class="btn btn--glass btn--block" style="margin-top:4px;" data-action="open-add-category">+ Add your own category</button>
+      ${badgeCount ? `<p style="text-align:center;font-size:11.5px;color:var(--sw-ink-faint);margin-top:14px;">🏅 ${badgeCount} budget badge${badgeCount === 1 ? "" : "s"} earned so far</p>` : ""}
+      <div class="glass card" style="margin-top:14px;">
+        <p class="section-title" style="margin:0 0 4px;font-size:15px;">Monthly Spending</p>
+        ${months.length ? chartHtml(months) : `<div class="empty-state">Log a spend to see your monthly totals.</div>`}
+      </div>
+    `;
+  }
+
+  function addCategorySheetHtml() {
+    return `
+      <div class="sheet-backdrop" data-action="close-add-category">
+        <div class="sheet" data-action="noop">
+          <div class="sheet__handle"></div>
+          <p class="sheet__title">New budget category</p>
+          <p class="sheet__subtitle">e.g. Pet Care, Subscriptions, Travel</p>
+          <input id="sw-category-name" class="field" placeholder="Category name" autofocus />
+          <button class="btn btn--primary btn--block" data-action="submit-add-category">Add Category</button>
+        </div>
+      </div>`;
+  }
+
+  function setCapSheetHtml(categoryId) {
+    const cat = S.budgetCategories.find((c) => c.id === categoryId);
+    if (!cat) return "";
+    return `
+      <div class="sheet-backdrop" data-action="close-set-cap">
+        <div class="sheet" data-action="noop">
+          <div class="sheet__handle"></div>
+          <p class="sheet__title">${escapeHtml(cat.name)} monthly limit</p>
+          <p class="sheet__subtitle">Stay under this all month to earn a badge.</p>
+          <div style="display:flex;align-items:center;justify-content:center;">
+            <span style="font-size:28px;font-weight:800;color:var(--sw-blue-dark);">$</span>
+            <input id="sw-cap-amount" class="amount-input" type="number" min="0" step="1" inputmode="decimal" placeholder="0" style="width:auto;flex:1;" value="${cat.monthlyCap != null ? cat.monthlyCap : ""}" autofocus />
+          </div>
+          <button class="btn btn--primary btn--block" data-action="submit-set-cap" data-id="${cat.id}">Save Limit</button>
+          ${cat.monthlyCap != null ? `<button class="btn btn--ghost btn--block" style="margin-top:8px;" data-action="clear-set-cap" data-id="${cat.id}">Remove limit</button>` : ""}
+        </div>
+      </div>`;
+  }
+
+  function profilePage() {
+    const curated = M.CURATED_ANNOUNCEMENTS.slice(0, 4);
+    return `
+      ${topbarHtml()}
+      <h1 class="section-title">Your Profile</h1>
+
+      <div class="glass card">
+        <div class="profile-row">
+          <div class="avatar">${M.PERSONA.initials}</div>
+          <div>
+            <p class="profile-row__name">${escapeHtml(M.PERSONA.name.toUpperCase())}</p>
+            ${S.singpass.loggedIn
+              ? `<div class="profile-row__status">${icon("check", 13)} Singpass logged in.</div>`
+              : `<div class="profile-row__status off">Not linked <a href="#" data-action="go" data-route="announcements" style="color:var(--sw-blue);font-weight:700;">Login</a></div>`}
+          </div>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn--glass" data-action="toast" data-msg="Account settings coming soon">${icon("user", 14)} Your Account</button>
+          <button class="btn btn--glass" data-action="toast" data-msg="Settings coming soon">Settings</button>
+        </div>
+      </div>
+
+      ${badgesRowHtml()}
+
+      <div class="glass card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+          <p class="section-title" style="margin:0;font-size:15px;">Announcements</p>
+        </div>
+        <div class="list">
+          ${curated.map((a) => `
+            <div class="list-item" data-action="go-announcement" data-id="${a.id}">
+              <div class="list-item__body"><p class="list-item__title">${escapeHtml(a.title)}</p></div>
+              <span class="list-item__chevron">${icon("chevron", 15)}</span>
+            </div>`).join("")}
+        </div>
+      </div>
+
+      <div class="glass card" data-action="go" data-route="budget" style="cursor:pointer;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <p class="section-title" style="margin:0;font-size:15px;">Budget Tracker</p>
+          <span style="color:var(--sw-ink-faint);">${icon("chevron", 15)}</span>
+        </div>
+        <p class="section-subtitle" style="margin:6px 0 0;">${budgetCategoriesWithCap().length} categor${budgetCategoriesWithCap().length === 1 ? "y" : "ies"} with a limit set -- tap to view.</p>
+      </div>
+
+      <div class="glass card">
+        <p class="section-title" style="margin:0 0 10px;font-size:15px;">Recently Used Deals</p>
+        ${S.usedDeals.length ? `<div class="deal-strip">${S.usedDeals.map((d) => {
+          const b = M.brandStyle(d.source);
+          return `<div class="deal-chip"><div class="deal-chip__media" style="background:${b.bg}">${escapeHtml(b.mark)}</div><div class="deal-chip__label"><b>${escapeHtml(d.source)}</b><span>${escapeHtml(d.deal_text || d.title)}</span></div></div>`;
+        }).join("")}</div>` : `<div class="empty-state" style="padding:20px 0;">Deals you use will show up here.</div>`}
+      </div>
+    `;
+  }
+
+  const PAGES = { home: homePage, deals: dealsPage, announcements: announcementsPage, budget: budgetPage, profile: profilePage };
+
+  // ---------------------------------------------------------------------
+  // Overlays: Singpass modal, Log Savings sheet, Search sheet
+  // ---------------------------------------------------------------------
+  function singpassBodyHtml() {
+    if (S.singpassStage === "scanning") {
+      return `
+        <div class="singpass-mark">${brandMarkHtml()}</div>
+        <p class="sheet__title">Scan with Singpass app</p>
+        <div class="qr-box"></div>
+        <p class="sheet__subtitle" style="display:flex;align-items:center;justify-content:center;gap:8px;">
+          <span class="spinner" style="border-color:rgba(0,94,186,0.25);border-top-color:var(--sw-blue);"></span> Waiting for approval&hellip;
+        </p>
+        <button class="btn btn--ghost btn--block" data-action="dismiss-singpass">Cancel</button>`;
+    }
+    return `
+      <div class="singpass-mark" style="background:linear-gradient(155deg,#3fbf72,#1a9c5c);">${icon("check", 26)}</div>
+      <p class="sheet__title">Verified</p>
+      <p class="sheet__subtitle">Logged in as <b>${escapeHtml(M.PERSONA.name)}</b><br/>NRIC ${escapeHtml(M.PERSONA.maskedNric)}</p>
+      <button class="btn btn--primary btn--block" data-action="confirm-singpass">Continue</button>`;
+  }
+
+  function singpassShellHtml() {
+    return `
+      <div class="sheet-backdrop center" data-action="dismiss-singpass">
+        <div class="sheet" data-action="noop" style="max-width:340px;">
+          <div id="sw-singpass-body">${singpassBodyHtml()}</div>
+        </div>
+      </div>`;
+  }
+
+  function logSheetHtml() {
+    const dateLabel = new Date().toLocaleDateString("en-SG", { weekday: "long", day: "numeric", month: "long" });
+    return `
+      <div class="sheet-backdrop" data-action="close-log-sheet">
+        <div class="sheet" data-action="noop">
+          <div class="sheet__handle"></div>
+          <p class="sheet__title">Log today's spending</p>
+          <p class="sheet__subtitle">${dateLabel}</p>
+          <div style="display:flex;align-items:center;justify-content:center;">
+            <span style="font-size:28px;font-weight:800;color:var(--sw-blue-dark);">$</span>
+            <input id="sw-amount" class="amount-input" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0.00" style="width:auto;flex:1;" autofocus />
+          </div>
+          <input id="sw-note" class="field" placeholder="Note (optional) -- e.g. skipped bubble tea" />
+          ${logSheetBodyHtml()}
+          <button class="btn btn--primary btn--block" data-action="submit-log">Save</button>
+        </div>
+      </div>`;
+  }
+
+  function logSheetBodyHtml() {
+    if (!S.budgetCategories.length) {
+      return `<p style="font-size:12px;color:var(--sw-ink-faint);margin:4px 0 16px;">Add a budget category on the Budget Tracker page first.</p>`;
+    }
+    return `
+      <p style="font-size:12px;font-weight:700;color:var(--sw-ink-soft);margin:4px 0 8px;">Category:</p>
+      <div class="tabs" style="margin-bottom:16px;">
+        ${S.budgetCategories.map((c) => `
+          <button class="tab ${S.expenseCategoryId === c.id ? "active" : ""}" data-action="pick-expense-category" data-id="${c.id}">${escapeHtml(c.name)}</button>
+        `).join("")}
+      </div>
+    `;
+  }
+
+  function searchResultsFor(query) {
+    const q = query.trim().toLowerCase();
+    if (!q) return [];
+    return [
+      ...allDeals().filter((d) => (d.title + " " + d.source).toLowerCase().includes(q)).map((d) => ({
+        label: d.deal_text ? `${d.source} -- ${d.deal_text}` : d.title, route: "deals", tag: "Deal",
+      })),
+      ...mergedAnnouncements().filter((a) => a.title.toLowerCase().includes(q)).map((a) => ({
+        label: a.title, route: "announcements", tag: "Announcement",
+      })),
+      ...S.budgetCategories.filter((c) => c.name.toLowerCase().includes(q)).map((c) => ({
+        label: c.name, route: "budget", tag: "Budget Category",
+      })),
+    ].slice(0, 20);
+  }
+
+  function searchResultsHtml(query) {
+    const results = searchResultsFor(query);
+    if (query.trim() && !results.length) return `<div class="empty-state">No matches for "${escapeHtml(query)}"</div>`;
+    return results.map((r) => `
+      <div class="list-item" data-action="search-goto" data-route="${r.route}">
+        <div class="list-item__body"><p class="list-item__title">${escapeHtml(r.label)}</p><p class="list-item__meta">${r.tag}</p></div>
+        <span class="list-item__chevron">${icon("chevron", 15)}</span>
+      </div>`).join("");
+  }
+
+  function searchOverlayHtml() {
+    return `
+      <div class="sheet-backdrop center" data-action="close-search">
+        <div class="sheet" data-action="noop" style="max-height:70vh;display:flex;flex-direction:column;">
+          <input id="sw-search" class="field" placeholder="Search deals, announcements, budgets&hellip;" value="${escapeHtml(S.searchQuery)}" autofocus />
+          <div id="sw-search-results" style="overflow-y:auto;">${searchResultsHtml(S.searchQuery)}</div>
+        </div>
+      </div>`;
+  }
+
+  // ---------------------------------------------------------------------
+  // DOM: build the persistent regions once, then only ever touch them
+  // through the targeted helpers below.
+  // ---------------------------------------------------------------------
+  function buildStaticShell() {
+    const root = document.getElementById("app");
+    root.innerHTML = `
+      <div class="app-shell">
+        <div class="titlebar-spacer"></div>
+        <div id="sw-shell" class="page"></div>
+        ${bottomNavHtml()}
+      </div>
+      <div id="sw-overlay"></div>
+      <div id="sw-toast" class="toast-root"></div>
+    `;
+  }
+
+  let pageTransitionToken = 0;
+
+  // mode: "nav" (route change -- slide+fade), "soft" (in-page refresh --
+  // quick fade), "none" (instant, no transition at all).
+  function renderPage(mode) {
+    const el = document.getElementById("sw-shell");
+    if (!el) return;
+    const html = (PAGES[S.route] || homePage)();
+
+    if (mode === "none" || !el.childNodes.length) {
+      el.innerHTML = html;
+      updateNavActiveState();
+      return;
+    }
+
+    const token = ++pageTransitionToken;
+    const outMs = mode === "nav" ? 130 : 90;
+    const inMs = mode === "nav" ? 220 : 150;
+    const restY = mode === "nav" ? "6px" : "0px";
+
+    el.style.transition = `opacity ${outMs}ms ease, transform ${outMs}ms ease`;
+    el.style.opacity = "0";
+    el.style.transform = `translateY(${mode === "nav" ? "-4px" : "0px"})`;
+
+    setTimeout(() => {
+      if (token !== pageTransitionToken) return; // superseded by a newer update
+      el.innerHTML = html;
+      updateNavActiveState();
+      if (mode === "nav") el.scrollTop = 0;
+      el.style.transition = "none";
+      el.style.transform = `translateY(${restY})`;
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          if (token !== pageTransitionToken) return;
+          el.style.transition = `opacity ${inMs}ms ease, transform ${inMs}ms ease`;
+          el.style.opacity = "1";
+          el.style.transform = "translateY(0)";
+        });
+      });
+    }, outMs);
+  }
+
+  function updateNavActiveState() {
+    document.querySelectorAll(".navbtn[data-route]").forEach((btn) => {
+      btn.classList.toggle("active", btn.dataset.route === S.route);
+    });
+  }
+
+  function setOverlay(html) {
+    document.getElementById("sw-overlay").innerHTML = html;
+  }
+  function closeOverlay() {
+    const root = document.getElementById("sw-overlay");
+    const el = root.firstElementChild;
+    if (!el) return;
+    el.classList.add("closing");
+    setTimeout(() => { root.innerHTML = ""; }, 160);
+  }
+  function fadeSwap(el, html, ms) {
+    if (!el) return;
+    const duration = ms || 160;
+    el.style.transition = `opacity ${duration}ms ease`;
+    el.style.opacity = "0";
+    setTimeout(() => {
+      el.innerHTML = html;
+      requestAnimationFrame(() => { el.style.opacity = "1"; });
+    }, duration);
+  }
+
+  let toastTimer = null;
+  function showToast(msg) {
+    const el = document.getElementById("sw-toast");
+    el.textContent = msg;
+    el.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => el.classList.remove("show"), 2200);
+  }
+
+  // ---------------------------------------------------------------------
+  // Event delegation
+  // ---------------------------------------------------------------------
+  document.addEventListener("click", (e) => {
+    const el = e.target.closest("[data-action]");
+    if (!el) return;
+    const action = el.dataset.action;
+    switch (action) {
+      case "noop": break; // clicked inside a sheet/modal card -- don't bubble to the backdrop's dismiss handler
+      case "go": go(el.dataset.route); break;
+      case "open-search":
+        S.searchOpen = true;
+        S.searchQuery = "";
+        setOverlay(searchOverlayHtml());
+        focusSoon("sw-search");
+        break;
+      case "close-search": S.searchOpen = false; closeOverlay(); break;
+      case "search-goto": S.searchOpen = false; closeOverlay(); go(el.dataset.route); break;
+      case "toast": showToast(el.dataset.msg); break;
+      case "set-deals-tab": S.dealsTab = el.dataset.tab; renderPage("soft"); break;
+      case "refresh-deals": loadDeals(false); break;
+      case "use-deal": {
+        const d = allDeals().find((x) => x.fingerprint === el.dataset.fingerprint);
+        if (d) useDeal(d);
+        break;
+      }
+      case "open-singpass": openSingpassModal(); break;
+      case "dismiss-singpass": closeSingpassModal(); break;
+      case "confirm-singpass": confirmSingpassLogin(); break;
+      case "toggle-announcement":
+        S.expandedAnnouncement = S.expandedAnnouncement === el.dataset.id ? null : el.dataset.id;
+        renderPage("none");
+        break;
+      case "go-announcement":
+        S.expandedAnnouncement = el.dataset.id;
+        go("announcements");
+        break;
+      case "toggle-subscribe": {
+        const a = mergedAnnouncements().find((x) => x.id === el.dataset.id);
+        if (a) toggleSubscribe(a);
+        break;
+      }
+      case "open-log-sheet": openLogSheet(); break;
+      case "close-log-sheet": closeLogSheet(); break;
+      case "pick-expense-category": pickExpenseCategory(el.dataset.id); break;
+      case "submit-log": {
+        const amount = parseFloat(document.getElementById("sw-amount")?.value || "0");
+        const note = document.getElementById("sw-note")?.value || "";
+        submitSpendingLog(amount, note, S.expenseCategoryId);
+        break;
+      }
+      case "open-add-category":
+        setOverlay(addCategorySheetHtml());
+        focusSoon("sw-category-name");
+        break;
+      case "close-add-category": closeOverlay(); break;
+      case "submit-add-category": {
+        const name = (document.getElementById("sw-category-name")?.value || "").trim();
+        if (name) addBudgetCategory(name);
+        break;
+      }
+      case "open-set-cap":
+        setOverlay(setCapSheetHtml(el.dataset.id));
+        focusSoon("sw-cap-amount");
+        break;
+      case "close-set-cap": closeOverlay(); break;
+      case "submit-set-cap": {
+        const raw = document.getElementById("sw-cap-amount")?.value || "";
+        const amt = parseFloat(raw);
+        setCategoryCap(el.dataset.id, raw === "" || isNaN(amt) || amt <= 0 ? null : amt);
+        break;
+      }
+      case "clear-set-cap": setCategoryCap(el.dataset.id, null); break;
+    }
+  });
+
+  document.addEventListener("input", (e) => {
+    if (e.target.id === "sw-search") {
+      S.searchQuery = e.target.value;
+      const results = document.getElementById("sw-search-results");
+      if (results) results.innerHTML = searchResultsHtml(S.searchQuery);
+    }
+  });
+
+  function focusSoon(id) {
+    requestAnimationFrame(() => document.getElementById(id)?.focus());
+  }
+
+  boot();
+})();
+
+</script>
+</body>
+</html>

@@ -1,0 +1,704 @@
+/* =============================================================================
+   SaveWiser - Liquid Glass design system
+   Apple Liquid Glass inspired: translucent frosted panels, soft depth,
+   continuous rounded corners, a single strong accent color (#005EBA).
+   ============================================================================= */
+
+:root {
+  --sw-blue: #005EBA;
+  --sw-blue-dark: #00447f;
+  --sw-blue-light: #4a9fe0;
+  --sw-blue-tint-10: rgba(0, 94, 186, 0.10);
+  --sw-blue-tint-16: rgba(0, 94, 186, 0.16);
+  --sw-blue-tint-28: rgba(0, 94, 186, 0.28);
+
+  --sw-ink: #0b1220;
+  --sw-ink-soft: #414a58;
+  --sw-ink-faint: #7c8494;
+
+  --sw-glass-fill: rgba(255, 255, 255, 0.55);
+  --sw-glass-fill-strong: rgba(255, 255, 255, 0.72);
+  --sw-glass-border: rgba(255, 255, 255, 0.55);
+  --sw-glass-shadow: rgba(20, 40, 70, 0.14);
+
+  --sw-blue-glass-fill: rgba(0, 94, 186, 0.62);
+  --sw-blue-glass-fill-strong: rgba(0, 94, 186, 0.78);
+  --sw-blue-glass-border: rgba(255, 255, 255, 0.35);
+
+  --sw-radius-xl: 28px;
+  --sw-radius-lg: 22px;
+  --sw-radius-md: 16px;
+  --sw-radius-sm: 12px;
+  --sw-radius-pill: 999px;
+
+  --sw-font: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text",
+    "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+
+  color-scheme: light;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  font-family: var(--sw-font);
+  color: var(--sw-ink);
+  -webkit-font-smoothing: antialiased;
+  user-select: none;
+}
+
+/* Non-mac fallback background: the Liquid Glass look here comes from CSS
+   blur over this gradient rather than true desktop vibrancy. */
+html.platform-other body {
+  background:
+    radial-gradient(1200px 800px at 15% -10%, rgba(0, 94, 186, 0.16), transparent 60%),
+    radial-gradient(900px 700px at 110% 10%, rgba(0, 94, 186, 0.10), transparent 55%),
+    linear-gradient(180deg, #eaf3fc 0%, #f6fafe 45%, #eef4fb 100%);
+}
+
+/* On macOS the Electron window itself is transparent + vibrant, so the page
+   background stays transparent and lets the OS material blur the desktop. */
+html.platform-mac body {
+  background: transparent;
+}
+
+#app { height: 100%; }
+
+::-webkit-scrollbar { width: 0; height: 0; }
+
+a { color: inherit; text-decoration: none; }
+button { font-family: inherit; }
+
+/* -----------------------------------------------------------------------
+   Shell / layout
+   ----------------------------------------------------------------------- */
+
+.app-shell {
+  max-width: 480px;
+  margin: 0 auto;
+  min-height: 100vh;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  -webkit-app-region: drag;
+}
+
+.app-shell * { -webkit-app-region: no-drag; }
+
+/* The whole shell (topbar+page+nav) fades/slides as one unit, driven by
+   JS toggling opacity/transform directly -- see setShellContent() in app.js.
+   Kept off the .page class itself so overlay/toast updates elsewhere never
+   retrigger it. */
+#sw-shell { transition: opacity 0.2s ease, transform 0.2s ease; }
+
+.titlebar-spacer { height: 28px; }
+html.platform-other .titlebar-spacer { height: 10px; }
+
+.page {
+  flex: 1;
+  padding: 4px 16px 120px;
+  overflow-y: auto;
+}
+
+@keyframes sw-fade-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.section-title {
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  margin: 18px 2px 10px;
+  color: var(--sw-ink);
+}
+
+.section-subtitle {
+  font-size: 13px;
+  color: var(--sw-ink-faint);
+  margin: -4px 2px 12px;
+}
+
+/* -----------------------------------------------------------------------
+   Glass primitives
+   ----------------------------------------------------------------------- */
+
+.glass {
+  background: var(--sw-glass-fill);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid var(--sw-glass-border);
+  border-radius: var(--sw-radius-lg);
+  box-shadow: 0 8px 28px var(--sw-glass-shadow), inset 0 1px 0 rgba(255,255,255,0.6);
+}
+
+.glass-strong {
+  background: var(--sw-glass-fill-strong);
+  backdrop-filter: blur(28px) saturate(180%);
+  -webkit-backdrop-filter: blur(28px) saturate(180%);
+}
+
+.glass-blue {
+  background: linear-gradient(155deg, var(--sw-blue-glass-fill), var(--sw-blue-glass-fill-strong));
+  backdrop-filter: blur(22px) saturate(160%);
+  -webkit-backdrop-filter: blur(22px) saturate(160%);
+  border: 1px solid var(--sw-blue-glass-border);
+  border-radius: var(--sw-radius-lg);
+  box-shadow: 0 10px 30px rgba(0, 94, 186, 0.28), inset 0 1px 0 rgba(255,255,255,0.25);
+  color: #fff;
+}
+
+.card {
+  padding: 16px;
+  margin-bottom: 14px;
+}
+
+/* -----------------------------------------------------------------------
+   Header pill ("Welcome back, SARAH ONG!")
+   ----------------------------------------------------------------------- */
+
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  margin: 0 0 4px;
+  border-radius: var(--sw-radius-pill);
+  background: linear-gradient(135deg, rgba(0,94,186,0.20), rgba(0,94,186,0.10));
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(0,94,186,0.22);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.5);
+}
+
+.topbar__icon {
+  width: 26px; height: 26px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 50%;
+  background: rgba(0,94,186,0.14);
+  color: var(--sw-blue);
+  flex: none;
+  overflow: hidden;
+}
+.topbar__icon img { width: 62%; height: 62%; object-fit: contain; display: block; }
+
+.topbar__text {
+  flex: 1;
+  font-size: 14.5px;
+  color: var(--sw-ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.topbar__text b { color: var(--sw-blue-dark); font-weight: 800; }
+
+.topbar__actions { display: flex; gap: 6px; }
+
+.topbar__btn {
+  width: 28px; height: 28px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.5);
+  color: var(--sw-blue-dark);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+}
+.topbar__btn:hover { background: rgba(255,255,255,0.8); }
+
+/* -----------------------------------------------------------------------
+   Bottom nav (floating glass pill)
+   ----------------------------------------------------------------------- */
+
+.bottomnav {
+  position: fixed;
+  left: 50%;
+  bottom: 22px;
+  transform: translateX(-50%);
+  width: calc(100% - 48px);
+  max-width: 400px;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  padding: 10px 10px;
+  border-radius: var(--sw-radius-pill);
+  background: rgba(255,255,255,0.65);
+  backdrop-filter: blur(28px) saturate(200%);
+  -webkit-backdrop-filter: blur(28px) saturate(200%);
+  border: 1px solid rgba(255,255,255,0.7);
+  box-shadow: 0 12px 34px rgba(20,40,70,0.22), inset 0 1px 0 rgba(255,255,255,0.7);
+  z-index: 50;
+}
+
+.navbtn {
+  border: none;
+  background: transparent;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 6px 14px;
+  border-radius: var(--sw-radius-pill);
+  color: var(--sw-ink-faint);
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 600;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.navbtn.active { color: var(--sw-blue); background: var(--sw-blue-tint-10); }
+.navbtn svg { width: 19px; height: 19px; }
+
+.navbtn--fab {
+  color: #fff;
+  background: linear-gradient(155deg, var(--sw-blue-light), var(--sw-blue));
+  padding: 10px 16px;
+  margin-top: -22px;
+  box-shadow: 0 8px 20px rgba(0,94,186,0.45);
+}
+.navbtn--fab.active { color: #fff; background: linear-gradient(155deg, var(--sw-blue-light), var(--sw-blue)); }
+
+/* -----------------------------------------------------------------------
+   Buttons
+   ----------------------------------------------------------------------- */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 11px 18px;
+  border-radius: var(--sw-radius-pill);
+  border: none;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.12s ease, box-shadow 0.12s ease, opacity 0.12s ease;
+}
+.btn:active { transform: scale(0.97); }
+
+.btn--primary {
+  background: linear-gradient(155deg, var(--sw-blue-light), var(--sw-blue));
+  color: #fff;
+  box-shadow: 0 8px 20px rgba(0,94,186,0.35);
+}
+.btn--primary:hover { box-shadow: 0 10px 24px rgba(0,94,186,0.45); }
+
+.btn--glass {
+  background: rgba(0,94,186,0.12);
+  color: var(--sw-blue-dark);
+  border: 1px solid rgba(0,94,186,0.22);
+}
+.btn--glass:hover { background: rgba(0,94,186,0.18); }
+
+.btn--ghost {
+  background: rgba(255,255,255,0.5);
+  color: var(--sw-ink-soft);
+  border: 1px solid rgba(255,255,255,0.7);
+}
+
+.btn--block { width: 100%; }
+.btn--sm { padding: 7px 12px; font-size: 12.5px; }
+.btn:disabled { opacity: 0.5; cursor: default; }
+
+/* -----------------------------------------------------------------------
+   Deal cards
+   ----------------------------------------------------------------------- */
+
+.deal-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.deal-card {
+  border-radius: var(--sw-radius-md);
+  overflow: hidden;
+  background: rgba(255,255,255,0.55);
+  backdrop-filter: blur(18px) saturate(160%);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  border: 1px solid rgba(255,255,255,0.6);
+  box-shadow: 0 6px 18px rgba(20,40,70,0.12);
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+.deal-card:hover { transform: translateY(-2px); }
+
+.deal-card__media {
+  height: 96px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 15px;
+  color: #fff;
+  text-align: center;
+  padding: 6px;
+  background-size: cover;
+  background-position: center;
+}
+
+.deal-card__body { padding: 10px 12px 12px; }
+.deal-card__title { font-size: 13.5px; font-weight: 700; margin: 0 0 2px; }
+.deal-card__desc { font-size: 12px; color: var(--sw-ink-faint); margin: 0; }
+.deal-card__badge {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  color: var(--sw-blue-dark);
+  background: var(--sw-blue-tint-16);
+  padding: 2px 7px;
+  border-radius: var(--sw-radius-pill);
+  margin-top: 6px;
+}
+
+.deal-strip {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  margin: 0 -2px 4px;
+}
+.deal-chip {
+  flex: none;
+  width: 96px;
+  border-radius: var(--sw-radius-sm);
+  overflow: hidden;
+  background: rgba(255,255,255,0.55);
+  border: 1px solid rgba(255,255,255,0.6);
+  cursor: pointer;
+}
+.deal-chip__media {
+  height: 60px;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 800; font-size: 11px; color: #fff; text-align: center; padding: 4px;
+}
+.deal-chip__label { padding: 6px 7px 8px; }
+.deal-chip__label b { display: block; font-size: 11px; }
+.deal-chip__label span { display: block; font-size: 10px; color: var(--sw-ink-faint); }
+
+/* Category chip tabs (Deals page) */
+.tabs {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  margin-bottom: 14px;
+}
+.tab {
+  flex: none;
+  padding: 8px 14px;
+  border-radius: var(--sw-radius-pill);
+  background: rgba(255,255,255,0.55);
+  border: 1px solid rgba(255,255,255,0.6);
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--sw-ink-soft);
+  cursor: pointer;
+}
+.tab.active {
+  background: var(--sw-blue);
+  color: #fff;
+  border-color: var(--sw-blue);
+  box-shadow: 0 6px 16px rgba(0,94,186,0.35);
+}
+
+/* -----------------------------------------------------------------------
+   Lists (Recent Activity / Announcements)
+   ----------------------------------------------------------------------- */
+
+.list { display: flex; flex-direction: column; }
+.list-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 4px;
+  border-bottom: 1px solid rgba(11,18,32,0.06);
+  cursor: pointer;
+}
+.list-item:last-child { border-bottom: none; }
+.list-item__icon {
+  width: 28px; height: 28px; border-radius: 9px;
+  background: var(--sw-blue-tint-10);
+  color: var(--sw-blue);
+  display: flex; align-items: center; justify-content: center;
+  flex: none;
+}
+.list-item__body { flex: 1; min-width: 0; }
+.list-item__title { font-size: 13.5px; font-weight: 700; margin: 0; }
+.list-item__meta { font-size: 11.5px; color: var(--sw-ink-faint); margin: 2px 0 0; }
+.list-item__chevron { color: var(--sw-ink-faint); flex: none; }
+
+.activity-list { font-size: 13px; line-height: 1.55; padding-left: 18px; margin: 0; color: var(--sw-ink-soft); }
+.activity-list li { margin-bottom: 6px; }
+.activity-list a { color: var(--sw-blue); text-decoration: underline; font-weight: 600; }
+
+/* -----------------------------------------------------------------------
+   Toggle switch (announcement subscribe)
+   ----------------------------------------------------------------------- */
+
+.toggle {
+  position: relative;
+  width: 42px; height: 25px;
+  border-radius: var(--sw-radius-pill);
+  background: rgba(11,18,32,0.16);
+  border: none;
+  cursor: pointer;
+  flex: none;
+  transition: background 0.18s ease;
+}
+.toggle.on { background: var(--sw-blue); }
+.toggle::after {
+  content: "";
+  position: absolute;
+  top: 2.5px; left: 3px;
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.25);
+  transition: transform 0.18s ease;
+}
+.toggle.on::after { transform: translateX(17px); }
+
+/* -----------------------------------------------------------------------
+   Profile
+   ----------------------------------------------------------------------- */
+
+.profile-row { display: flex; align-items: center; gap: 12px; }
+.avatar {
+  width: 46px; height: 46px; border-radius: 50%;
+  background: linear-gradient(155deg, var(--sw-blue-light), var(--sw-blue));
+  color: #fff; display: flex; align-items: center; justify-content: center;
+  font-weight: 800; font-size: 16px; flex: none;
+  box-shadow: 0 4px 12px rgba(0,94,186,0.35);
+}
+.profile-row__name { font-weight: 800; font-size: 14.5px; margin: 0; }
+.profile-row__status { font-size: 12px; color: #1a9c5c; display: flex; align-items: center; gap: 4px; margin-top: 2px; }
+.profile-row__status.off { color: var(--sw-ink-faint); }
+
+.btn-row { display: flex; gap: 10px; margin-top: 14px; }
+.btn-row .btn { flex: 1; }
+
+/* -----------------------------------------------------------------------
+   Progress bars / badges
+   ----------------------------------------------------------------------- */
+
+.progress-track {
+  height: 10px; border-radius: var(--sw-radius-pill);
+  background: rgba(11,18,32,0.08);
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%; border-radius: var(--sw-radius-pill);
+  background: linear-gradient(90deg, var(--sw-blue-light), var(--sw-blue));
+  transition: width 0.4s ease;
+}
+.progress-label { display: flex; justify-content: space-between; align-items: center; font-size: 11.5px; color: var(--sw-ink-faint); margin-top: 6px; gap: 8px; }
+.progress-pct { font-weight: 800; color: var(--sw-blue-dark); font-size: 12.5px; }
+
+/* Badges */
+.badge-strip { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 2px; }
+.badge-chip {
+  flex: none;
+  width: 78px;
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  padding: 12px 6px 10px;
+  border-radius: var(--sw-radius-md);
+  background: rgba(255,255,255,0.5);
+  border: 1px solid rgba(255,255,255,0.6);
+  text-align: center;
+}
+.badge-chip__mark {
+  width: 40px; height: 40px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 19px;
+  background: linear-gradient(155deg, var(--sw-blue-light), var(--sw-blue));
+  box-shadow: 0 6px 14px rgba(0,94,186,0.3);
+}
+.badge-chip.locked .badge-chip__mark {
+  background: rgba(11,18,32,0.08);
+  box-shadow: none;
+  filter: grayscale(1);
+  opacity: 0.55;
+}
+.badge-chip__name { font-size: 10px; font-weight: 700; color: var(--sw-ink-soft); line-height: 1.25; }
+.badge-chip.locked .badge-chip__name { color: var(--sw-ink-faint); }
+.badge-pill {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 11.5px; font-weight: 700; color: var(--sw-blue-dark);
+  background: var(--sw-blue-tint-16); padding: 4px 10px; border-radius: var(--sw-radius-pill);
+}
+
+/* Bar chart (Monthly Spending) */
+.chart {
+  display: flex; align-items: flex-end; gap: 8px;
+  height: 120px; padding: 6px 2px 0;
+}
+.chart__bar-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; }
+.chart__bar {
+  width: 60%;
+  border-radius: 6px 6px 3px 3px;
+  background: linear-gradient(180deg, var(--sw-blue-light), var(--sw-blue));
+  transition: height 0.5s ease;
+}
+.chart__label { font-size: 9.5px; color: var(--sw-ink-faint); margin-top: 6px; }
+
+/* -----------------------------------------------------------------------
+   Budget Tracker
+   ----------------------------------------------------------------------- */
+
+.budget-card { padding: 14px 16px; margin-bottom: 10px; }
+.budget-card__head { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.budget-card__icon {
+  width: 32px; height: 32px; border-radius: 10px;
+  background: var(--sw-blue-tint-10);
+  color: var(--sw-blue);
+  display: flex; align-items: center; justify-content: center;
+  flex: none;
+}
+.budget-card__name { font-size: 13.5px; font-weight: 800; margin: 0; }
+.budget-card__cap { font-size: 11.5px; color: var(--sw-ink-faint); margin: 2px 0 0; }
+
+.progress-fill.over { background: linear-gradient(90deg, #e0713f, #c0392b); }
+.budget-over-note {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 11px; font-weight: 700; color: #c0392b;
+  background: rgba(192,57,43,0.12); padding: 4px 10px; border-radius: var(--sw-radius-pill);
+  margin-top: 10px;
+}
+
+/* -----------------------------------------------------------------------
+   Log Spending sheet / Singpass modal (bottom sheet style)
+   ----------------------------------------------------------------------- */
+
+.sheet-backdrop {
+  position: fixed; inset: 0;
+  background: rgba(6, 14, 28, 0.38);
+  backdrop-filter: blur(3px);
+  display: flex; align-items: flex-end; justify-content: center;
+  z-index: 100;
+  animation: sw-fade-in 0.18s ease both;
+}
+.sheet-backdrop.center { align-items: center; padding: 20px; }
+.sheet-backdrop.closing { animation: none; opacity: 0; transition: opacity 0.16s ease; }
+
+.sheet {
+  width: 100%;
+  max-width: 480px;
+  background: rgba(255,255,255,0.86);
+  backdrop-filter: blur(30px) saturate(180%);
+  -webkit-backdrop-filter: blur(30px) saturate(180%);
+  border: 1px solid rgba(255,255,255,0.7);
+  border-radius: 26px 26px 0 0;
+  padding: 22px 20px calc(24px + env(safe-area-inset-bottom, 0px));
+  box-shadow: 0 -14px 40px rgba(20,40,70,0.28);
+}
+.sheet-backdrop.center .sheet { border-radius: var(--sw-radius-xl); padding: 26px 22px; }
+
+.sheet__handle { width: 40px; height: 4px; border-radius: 2px; background: rgba(11,18,32,0.16); margin: 0 auto 16px; }
+.sheet__title { font-size: 17px; font-weight: 800; margin: 0 0 4px; text-align: center; }
+.sheet__subtitle { font-size: 12.5px; color: var(--sw-ink-faint); margin: 0 0 18px; text-align: center; }
+
+.amount-input {
+  width: 100%;
+  font-size: 32px;
+  font-weight: 800;
+  text-align: center;
+  border: none;
+  background: transparent;
+  color: var(--sw-blue-dark);
+  margin-bottom: 16px;
+  outline: none;
+}
+
+.field {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: var(--sw-radius-md);
+  border: 1px solid rgba(11,18,32,0.12);
+  background: rgba(255,255,255,0.7);
+  font-size: 13.5px;
+  margin-bottom: 12px;
+  outline: none;
+}
+.field:focus { border-color: var(--sw-blue); box-shadow: 0 0 0 3px var(--sw-blue-tint-10); }
+
+.singpass-mark {
+  width: 64px; height: 64px; border-radius: 18px;
+  background: linear-gradient(155deg, var(--sw-blue-light), var(--sw-blue));
+  color: #fff; display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 14px; font-weight: 800; font-size: 22px;
+  box-shadow: 0 10px 24px rgba(0,94,186,0.4);
+}
+
+.qr-box {
+  width: 168px; height: 168px; margin: 0 auto 16px;
+  border-radius: var(--sw-radius-md);
+  background:
+    repeating-linear-gradient(0deg, #0b1220 0 6px, transparent 6px 12px),
+    repeating-linear-gradient(90deg, #0b1220 0 6px, transparent 6px 12px);
+  background-blend-mode: multiply;
+  background-color: #fff;
+  border: 1px solid rgba(11,18,32,0.1);
+  position: relative;
+}
+.qr-box::after {
+  content: "";
+  position: absolute; inset: 34%;
+  background: #fff;
+  border-radius: 4px;
+}
+
+.spinner {
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  border: 2px solid rgba(255,255,255,0.5);
+  border-top-color: #fff;
+  animation: sw-spin 0.7s linear infinite;
+  display: inline-block;
+}
+@keyframes sw-spin { to { transform: rotate(360deg); } }
+
+/* Persistent, always-mounted toast -- shown/hidden by toggling .show rather
+   than being added/removed from the DOM, so it never replays a keyframe
+   animation just because some unrelated part of the app re-rendered. */
+.toast-root {
+  position: fixed;
+  left: 50%; bottom: 110px;
+  transform: translate(-50%, 8px);
+  background: rgba(11,18,32,0.88);
+  color: #fff;
+  padding: 10px 18px;
+  border-radius: var(--sw-radius-pill);
+  font-size: 12.5px;
+  font-weight: 600;
+  z-index: 200;
+  box-shadow: 0 10px 26px rgba(0,0,0,0.3);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  max-width: calc(100% - 48px);
+  text-align: center;
+}
+.toast-root.show { opacity: 1; transform: translate(-50%, 0); }
+
+.empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--sw-ink-faint);
+  font-size: 13px;
+}
+
+.skeleton {
+  background: linear-gradient(90deg, rgba(11,18,32,0.06), rgba(11,18,32,0.12), rgba(11,18,32,0.06));
+  background-size: 200% 100%;
+  animation: sw-skeleton 1.2s ease-in-out infinite;
+  border-radius: var(--sw-radius-md);
+}
+@keyframes sw-skeleton {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}

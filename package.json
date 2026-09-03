@@ -1,0 +1,37 @@
+{
+  "name": "savewiser",
+  "productName": "SaveWiser",
+  "version": "1.0.0",
+  "description": "SaveWiser - save smarter. Deals, government assistance announcements, and savings challenges for Singapore, in one desktop app.",
+  "main": "main.js",
+  "author": "SaveWiser",
+  "license": "UNLICENSED",
+  "private": true,
+  "scripts": {
+    "start": "electron ."
+  },
+  "devDependencies": {
+    "electron": "^44.1.0"
+  },
+  "_comment_build": "electron-builder is intentionally NOT a dependency -- see README's 'Packaging installers' section. Add it yourself (npm install --save-dev electron-builder@latest) only when you're ready to build a distributable, so you always pull whatever version is current (and patched) at that time.",
+  "build": {
+    "appId": "sg.savewiser.app",
+    "productName": "SaveWiser",
+    "files": [
+      "main.js",
+      "preload.js",
+      "src/**/*",
+      "scraper/**/*",
+      "package.json"
+    ],
+    "mac": {
+      "category": "public.app-category.finance"
+    },
+    "win": {
+      "target": "nsis"
+    },
+    "linux": {
+      "target": "AppImage"
+    }
+  }
+}
